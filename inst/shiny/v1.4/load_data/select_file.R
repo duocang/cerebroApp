@@ -29,13 +29,72 @@ output[["load_data_select_file_UI"]] <- renderUI({
             width = '350px',
             buttonLabel = "Browse...",
             placeholder = "No file selected"
-          )
+          ),
+          ## Show file selector dropdown if multiple files are available
+          uiOutput("crb_file_selector_UI")
         )
       )
     )
   } else {
     fluidRow(
       htmlOutput("load_data_mode_closed")
+    )
+  }
+})
+
+##----------------------------------------------------------------------------##
+## UI element for selecting from multiple pre-configured files.
+##----------------------------------------------------------------------------##
+
+output[["crb_file_selector_UI"]] <- renderUI({
+  ## only show if multiple files are available
+  if (!is.null(available_crb_files$files) && length(available_crb_files$files) > 1) {
+    ## if names are available (from named list), use them directly
+    if (!is.null(available_crb_files$names)) {
+      file_choices <- setNames(
+        available_crb_files$files,
+        available_crb_files$names
+      )
+    } else {
+      ## otherwise, create named list by extracting filename or experiment_name
+      file_choices <- setNames(
+        available_crb_files$files,
+        sapply(available_crb_files$files, function(f) {
+          ## try to load the file and get experiment_name
+          tryCatch({
+            if (file.exists(f)) {
+              data <- readRDS(f)
+            } else if (exists(f)) {
+              data <- get(f)
+            } else {
+              return(f)
+            }
+            ## get experiment_name from the loaded data
+            if (!is.null(data$getExperiment())) {
+              return(data$getExperiment())
+            } else {
+              return(f)
+            }
+          }, error = function(e) {
+            ## if anything goes wrong, fall back to filename or variable name
+            if (file.exists(f)) {
+              basename(f)
+            } else {
+              f  ## if it's a variable name, use as-is
+            }
+          })
+        })
+      )
+    }
+    tagList(
+      titlePanel("Select sample dataset"),
+      selectInput(
+        inputId = "crb_file_selector",
+        label = "Select from available datasets:",
+        choices = file_choices,
+        selected = available_crb_files$selected,
+        width = '350px'
+      )
     )
   }
 })
@@ -76,30 +135,3 @@ output[["load_data_mode_closed"]] <- renderText({
     )
   }
 })
-
-##    checkboxInput(
-##                 "hover_checkbox",
-##                 label = "Switch on hover info to see additional metadata of each cell. Note that this increases plotting time.",
-##                 value = Cerebro.options[['projections_show_hover_info']],
-##                 ),
-##             checkboxInput(
-##                 "webgl_checkbox",
-##                 label = "Using WebGL is best for performance but might not be compatible with every browser",
-##                 value = TRUE,
-##                 )
-
-## ##----------------------------------------------------------------------------##
-## ## Oberserve event: use webgl?
-## ##----------------------------------------------------------------------------##
-## observeEvent(input[["webgl_checkbox"]], {
-##   preferences[["use_webgl"]] <- input[["webgl_checkbox"]]
-##   print(glue::glue("[{Sys.time()}] WebGL status: {preferences[['use_webgl']]}"))
-## })
-
-## ##----------------------------------------------------------------------------##
-## ## Oberserve event: show hover?
-## ##----------------------------------------------------------------------------##
-## observeEvent(input[["hover_checkbox"]], {
-##   preferences[["show_hover_info_in_projections"]] <- input[["hover_checkbox"]]
-##   print(glue::glue("[{Sys.time()}] Show hover info status: {preferences[['show_hover_info_in_projections']]}"))
-## })

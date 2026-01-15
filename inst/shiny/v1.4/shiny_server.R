@@ -66,8 +66,8 @@ server <- function(input, output, session) {
   ## Load data set.
   ##--------------------------------------------------------------------------##
 
-  ## reactive value holding path to file of data set to load
-  data_to_load <- reactiveValues()
+  ## reactive value holding list of available files and currently selected file
+  available_crb_files <- reactiveValues(files = NULL, selected = NULL, names = NULL)
 
   ## listen to selected 'input_file', initialize before UI element is loaded
   observeEvent(input[['input_file']], ignoreNULL = FALSE, {
@@ -75,7 +75,7 @@ server <- function(input, output, session) {
     ## grab path from 'input_file' if one is specified
     if (
       !is.null(input[["input_file"]]) &&
-      all(!is.na(input[["input_file"]])) &&
+      !is.na(input[["input_file"]]) &&
       file.exists(input[["input_file"]]$datapath)
     ) {
       path_to_load <- input[["input_file"]]$datapath
@@ -86,59 +86,80 @@ server <- function(input, output, session) {
       !is.null(Cerebro.options[["crb_file_to_load"]])
     ) {
       file_to_load <- Cerebro.options[["crb_file_to_load"]]
-      if (file.exists(file_to_load) || exists(file_to_load)) {
-        path_to_load <- .GlobalEnv$Cerebro.options$crb_file_to_load
+      ## check if file_to_load is a vector/list with multiple files
+      if (length(file_to_load) > 1) {
+        ## store all available files
+        available_crb_files$files <- file_to_load
+        ## check if file_to_load has names (named list)
+        file_names <- names(file_to_load)
+        if (!is.null(file_names) && length(file_names) == length(file_to_load)) {
+          ## if all files have names, store them
+          available_crb_files$names <- file_names
+        } else {
+          ## if no names, set to NULL
+          available_crb_files$names <- NULL
+        }
+        ## if a file is already selected, use it; otherwise use the smallest one by file size
+        if (!is.null(available_crb_files$selected)) {
+          path_to_load <- available_crb_files$selected
+        } else {
+          ## find the smallest file by file size
+          file_sizes <- sapply(file_to_load, function(f) {
+            if (file.exists(f)) {
+              file.size(f)
+            } else {
+              Inf  ## if it's a variable/object, assign infinite size so it won't be selected
+            }
+          })
+          smallest_idx <- which.min(file_sizes)
+          path_to_load <- file_to_load[smallest_idx]
+        }
+      } else {
+        ## single file case
+        available_crb_files$files <- NULL
+        available_crb_files$names <- NULL
+        if (file.exists(file_to_load) || exists(file_to_load)) {
+          path_to_load <- file_to_load
+        }
       }
     }
     ## assign path to example file if none of the above apply
     if (path_to_load=='') {
       path_to_load <- system.file("extdata/v1.4/example.crb", package = "cerebroApp")
     }
-    ## set reactive value to new file path
-    data_to_load$path <- path_to_load
+    ## set reactive value to selected file path
+    available_crb_files$selected <- path_to_load
+  })
+
+  ## listen to selected file from dropdown (when multiple files available)
+  observeEvent(input[['crb_file_selector']], {
+    if (!is.null(input[['crb_file_selector']]) && !is.null(available_crb_files$files)) {
+      available_crb_files$selected <- input[['crb_file_selector']]
+    }
   })
 
   ## create reactive value holding the current data set
   data_set <- reactive({
-    dataset_to_load <- data_to_load$path
+    dataset_to_load <- available_crb_files$selected
     if (exists(dataset_to_load)) {
-      print(glue::glue("[{Sys.time()}] Load data set from variable: {dataset_to_load}"))
+      print(glue::glue("[{Sys.time()}] Load from variable: {dataset_to_load}"))
       data <- get(dataset_to_load)
     } else {
       ## log message
-      print(glue::glue("[{Sys.time()}] Load data set from file: {dataset_to_load}"))
+      print(glue::glue("[{Sys.time()}] File to load: {dataset_to_load}"))
       ## read the file
       data <- readRDS(dataset_to_load)
-      if (
-        exists("Cerebro.options") &&
-          Cerebro.options[["expression_matrix_mode"]] == "h5" &&
-          file.exists(Cerebro.options[["expression_matrix_h5"]])
-      ) {
-        print(glue::glue("[{Sys.time()}] Loading h5 expression matrix from: {Cerebro.options[['expression_matrix_h5']]}"))
-        expression_matrix <- t(HDF5Array::TENxMatrix(Cerebro.options[["expression_matrix_h5"]], group = "expression"))
-      } else if (
-        exists("Cerebro.options") &&
-          Cerebro.options[["expression_matrix_mode"]] == "BPCells" &&
-          file.exists(Cerebro.options[["expression_matrix_BPCells"]])
-      ) {
-        print(glue::glue("[{Sys.time()}] Loading BPCells expression matrix from: {Cerebro.options[['expression_matrix_BPCells']]}"))
-        expression_matrix <- BPCells::open_matrix_dir(Cerebro.options[["expression_matrix_BPCells"]])
-      } else {
-        message("expression_matrix_mode is not set to 'h5' or 'BPCells', skipping loading expression matrix")
-      }
     }
-    data$expression <- expression_matrix
     ## log message
     message(data$print())
     ## check if 'expression' slot exists and print log message with its format
     ## if it does
-    if (!is.null(data$expression)) {
+    if ( !is.null(data$expression) ) {
       print(glue::glue("[{Sys.time()}] Format of expression data: {class(data$expression)}"))
     }
     ## return loaded data
     return(data)
   })
-
 
   # list of available trajectories
   available_trajectories <- reactive({
@@ -171,12 +192,6 @@ server <- function(input, output, session) {
     }
     # message(str(available_trajectories))
     return(available_trajectories)
-  })
-
-  # available genes
-  list_of_genes <- reactive({
-    req(data_set())
-    rownames(data_set()$expression)
   })
 
   # hover info for projection
@@ -272,19 +287,6 @@ server <- function(input, output, session) {
   })
 
   ##--------------------------------------------------------------------------##
-  ## Print message when session is closed due to inactivity.
-  ##--------------------------------------------------------------------------##
-  observeEvent(input$timeOut, {
-    print(paste0("Session (", session$token, ") timed out at: ", Sys.time()))
-    showModal(modalDialog(
-      title = "Timeout",
-      paste("Session timeout due to", input$timeOut, "inactivity -", Sys.time()),
-      footer = NULL
-    ))
-    session$close()
-  })
-
-  ##--------------------------------------------------------------------------##
   ## Tabs.
   ##--------------------------------------------------------------------------##
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/load_data/server.R"), local = TRUE)
@@ -295,4 +297,10 @@ server <- function(input, output, session) {
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/gene_id_conversion/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/color_management/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/about/server.R"), local = TRUE)
+
+  source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/most_expressed_genes/server.R"), local = TRUE)
+  source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/enriched_pathways/server.R"), local = TRUE)
+  source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/trajectory/server.R"), local = TRUE)
+  source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/extra_material/server.R"), local = TRUE)
+  source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/analysis_info/server.R"), local = TRUE)
 }

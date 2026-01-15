@@ -71,6 +71,12 @@ source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/gene_id_conversion
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/color_management/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/about/UI.R"), local = TRUE)
 
+source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/most_expressed_genes/UI.R"), local = TRUE)
+source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/enriched_pathways/UI.R"), local = TRUE)
+source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/trajectory/UI.R"), local = TRUE)
+source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/extra_material/UI.R"), local = TRUE)
+source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/analysis_info/UI.R"), local = TRUE)
+
 ##----------------------------------------------------------------------------##
 ## Create dashboard with different tabs.
 ##----------------------------------------------------------------------------##
@@ -86,9 +92,14 @@ ui <- dashboardPage(
       menuItem("Data info", tabName = "loadData", icon = icon("info"), selected = TRUE),
       menuItem("Main", tabName = "overview", icon = icon("home")),
       menuItem("Groups", tabName = "groups", icon = icon("layer-group")),
+      menuItem("Most expressed genes", tabName = "mostExpressedGenes", icon = icon("bullhorn")),
       menuItem("Marker genes", tabName = "markerGenes", icon = icon("list-alt")),
+      menuItem("Enriched pathways", tabName = "enrichedPathways", icon = icon("sitemap")),
       menuItem("Gene expression", tabName = "geneExpression", icon = icon("signal")),
+      menuItemOutput("sidebar_item_trajectory"),
+      menuItemOutput("sidebar_item_extra_material"),
       menuItem("Gene ID conversion", tabName = "geneIdConversion", icon = icon("barcode")),
+      menuItem("Analysis info", tabName = "analysis_info", icon = icon("info")),
       menuItem("Color management", tabName = "color_management", icon = icon("palette")),
       menuItem("About", tabName = "about", icon = icon("at"))
     )
@@ -101,8 +112,13 @@ ui <- dashboardPage(
       tab_overview,
       tab_groups,
       tab_marker_genes,
+      tab_most_expressed_genes,
+      tab_enriched_pathways,
       tab_gene_expression,
+      tab_trajectory,
+      tab_extra_material,
       tab_gene_id_conversion,
+      tab_analysis_info,
       tab_color_management,
       tab_about
     ),
