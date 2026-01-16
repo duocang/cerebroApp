@@ -16,6 +16,9 @@
 #' @param groups Names of grouping variables in meta data
 #' (\code{object@meta.data}), e.g. \code{c("sample","cluster")}; at least one
 #' must be provided; defaults to \code{NULL}.
+#' @param main_group The primary grouping variable to use for display in Cerebro;
+#' must be one of the grouping variables specified in \code{groups}; defaults to
+#' \code{NULL}.
 #' @param cell_cycle Names of columns in meta data
 #' (\code{object@meta.data}) that contain cell cycle information, e.g.
 #' \code{c("Phase")}; defaults to \code{NULL}.
@@ -67,6 +70,7 @@ exportFromSeurat <- function(
   experiment_name,
   organism,
   groups,
+  main_group = NULL,
   cell_cycle = NULL,
   nUMI = 'nUMI',
   nGene = 'nGene',
@@ -87,12 +91,13 @@ exportFromSeurat <- function(
     )
   }
 
-  ## check that Seurat package is at least v3.0
-  if ( utils::packageVersion('Seurat') < 3 ) {
+  ## Check Seurat package version using compareVersion
+  seurat_version <- as.character(utils::packageVersion("Seurat"))
+  if (utils::compareVersion(seurat_version, "3.0.0") < 0) {
     stop(
       paste0(
-        "The installed Seurat package is of version `", utils::packageVersion('Seurat'),
-        "`, but at least v3.0 is required."
+        "The installed Seurat package is of version `",
+                seurat_version, "`, but at least v3.0 is required."
       ),
       call. = FALSE
     )
@@ -109,10 +114,11 @@ exportFromSeurat <- function(
   }
 
   ## check version of Seurat object and stop if it is lower than 3
-  if ( object@version < 3 ) {
+  obj_version <- as.character(object@version)
+  if (utils::compareVersion(obj_version, "3.0.0") < 0) {
     stop(
       paste0(
-        "Provided Seurat object has version `", object@version, "` but must be at least 3.0."
+        "Provided Seurat object has version `", obj_version, "` but must be at least 3.0."
       ),
       call. = FALSE
     )
@@ -127,6 +133,17 @@ exportFromSeurat <- function(
           groups[which(groups %in% names(object@meta.data) == FALSE)],
           collapse = ', '
         )
+      ),
+      call. = FALSE
+    )
+  }
+
+  ## `main_group`
+  if ( !is.null(main_group) && !(main_group %in% groups) ) {
+    stop(
+      paste0(
+        'Specified main_group `', main_group, '` is not in the list of groups. ',
+        'Valid options are: ', paste(groups, collapse = ', ')
       ),
       call. = FALSE
     )
@@ -212,20 +229,39 @@ exportFromSeurat <- function(
   ## add transcript counts
   ##--------------------------------------------------------------------------##
 
-  ## get expression data
-  expression_data <- try(
-    Seurat::GetAssayData(object, assay = assay, slot = slot),
-    silent = TRUE
-  )
-
-  ## check if provided slot exists in provided assay
-  if ( class(expression_data) == 'try-error' ) {
-    stop(
-      paste0(
-        'Slot `', slot, '` could not be found in `', assay, '` assay slot.'
-      ),
-      call. = FALSE
+  ## get expression data - handle both Seurat < 5 and >= 5
+  if (utils::compareVersion(seurat_version, "5.0.0") < 0) {
+    # Use slot parameter for Seurat < 5
+    expression_data <- try(
+      Seurat::GetAssayData(object, assay = assay, slot = slot),
+      silent = TRUE
     )
+    if (class(expression_data) == "try-error") {
+      stop(
+        paste0(
+          "Slot `", slot, "` could not be found in `", assay, "` assay slot."
+        ),
+        call. = FALSE
+      )
+    }
+  } else {
+    # Use layer parameter for Seurat >= 5
+    # Map slot to layer names (data -> data, counts -> counts, scale.data -> scale.data)
+    layer_name <- switch(slot,
+                         "data" = "data",
+                         "counts" = "counts",
+                         "scale.data" = "scale.data",
+                         slot)  # default to slot name if no mapping
+    expression_data <- try(
+      Seurat::GetAssayData(object, assay = assay, layer = layer_name),
+      silent = TRUE
+    )
+    if (class(expression_data) == "try-error") {
+      stop(
+        paste0("Layer `", layer_name, "` could not be found in `", assay, "` assay."),
+        call. = FALSE
+      )
+    }
   }
 
   ## convert expression data to "RleArray" if requested, if it is "dgCMatrix" or
@@ -432,6 +468,11 @@ exportFromSeurat <- function(
   ##--------------------------------------------------------------------------##
   for ( i in groups ) {
     export$addGroup(i, levels(temp_meta_data[[i]]))
+  }
+
+  ## set main group if specified
+  if ( !is.null(main_group) ) {
+    export$addParameters('main_group', main_group)
   }
 
   if (

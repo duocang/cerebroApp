@@ -12,6 +12,7 @@ exportFromSeurat(
   experiment_name,
   organism,
   groups,
+  main_group = NULL,
   cell_cycle = NULL,
   nUMI = "nUMI",
   nGene = "nGene",
@@ -39,6 +40,10 @@ bottlenecks in the Cerebro interface.}
 \item{groups}{Names of grouping variables in meta data
 (\code{object@meta.data}), e.g. \code{c("sample","cluster")}; at least one
 must be provided; defaults to \code{NULL}.}
+
+\item{main_group}{The primary grouping variable to use for display in Cerebro;
+must be one of the grouping variables specified in \code{groups}; defaults to
+\code{NULL}.}
 
 \item{cell_cycle}{Names of columns in meta data
 (\code{object@meta.data}) that contain cell cycle information, e.g.

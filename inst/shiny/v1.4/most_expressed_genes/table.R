@@ -7,10 +7,7 @@
 ##----------------------------------------------------------------------------##
 output[["most_expressed_genes_table_UI"]] <- renderUI({
   selected_group <- input[['most_expressed_genes_selected_group']]
-  if (
-    is.null(selected_group) ||
-    selected_group %in% getGroups() == FALSE
-  ) {
+  if (is.null(selected_group) || selected_group %in% getGroups() == FALSE) {
     fluidRow(
       cerebroBox(
         title = boxTitle("Most expressed genes"),
@@ -69,10 +66,7 @@ output[["most_expressed_genes_filter_subgroups_UI"]] <- renderUI({
   ## check if pre-filtering is activated and name of first column in table is
   ## one of the registered groups
   ## ... it's not
-  if (
-    input[["most_expressed_genes_table_filter_switch"]] == TRUE ||
-    colnames(results_df)[1] %in% getGroups() == FALSE
-  ) {
+  if (input[["most_expressed_genes_table_filter_switch"]] == TRUE || colnames(results_df)[1] %in% getGroups() == FALSE) {
     ## return nothing (empty row)
     fluidRow()
   ## ... it is

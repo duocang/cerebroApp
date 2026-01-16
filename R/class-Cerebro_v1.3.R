@@ -6,7 +6,7 @@ setOldClass(Classes = 'package_version')
 #' @description
 #' A \code{Cerebro_v1.3} object is an R6 class that contains several types of
 #' data that can be visualized in Cerebro.
-#' 
+#'
 #' @return
 #' A new \code{Cerebro_v1.3} object.
 #'
@@ -122,7 +122,7 @@ Cerebro_v1.3 <- R6::R6Class(
     #' @description
     #' Get the version of \code{cerebroApp} that was used to generate this
     #' object.
-    #' 
+    #'
     #' @return
     #' Version as \code{package_version} class.
     getVersion = function() {
@@ -857,7 +857,7 @@ Cerebro_v1.3 <- R6::R6Class(
 
     #' @description
     #' Add table to `extra_material` slot.
-    #' 
+    #'
     #' @param name Name of material, will be used to select it in Cerebro.
     #' @param table Table that should be added, must be \code{data.frame}.
     addExtraTable = function(name, table) {
@@ -898,7 +898,7 @@ Cerebro_v1.3 <- R6::R6Class(
 
     #' @description
     #' Add plot to `extra_material` slot.
-    #' 
+    #'
     #' @param name Name of material, will be used to select it in Cerebro.
     #' @param plot Plot that should be added, must be created with
     #' \code{ggplot2} (class: \code{ggplot}).
