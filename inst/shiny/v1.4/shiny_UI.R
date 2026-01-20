@@ -71,8 +71,8 @@ source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/gene_id_conversion
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/color_management/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/about/UI.R"), local = TRUE)
 
-## BCR tab
-source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/bcr/UI.R"), local = TRUE)
+## Immune Repertoire tabs (BCR/TCR)
+source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/immune_repertoire/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/most_expressed_genes/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/enriched_pathways/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/trajectory/UI.R"), local = TRUE)
@@ -99,6 +99,7 @@ ui <- dashboardPage(
       menuItem("Enriched pathways", tabName = "enrichedPathways", icon = icon("sitemap")),
       menuItem("Gene expression", tabName = "geneExpression", icon = icon("signal")),
       menuItem("BCR", tabName = "bcr", icon = icon("dna")),
+      menuItem("TCR", tabName = "tcr", icon = icon("dna")),
       menuItemOutput("sidebar_item_trajectory"),
       menuItemOutput("sidebar_item_extra_material"),
       menuItem("Gene ID conversion", tabName = "geneIdConversion", icon = icon("barcode")),
@@ -137,7 +138,8 @@ ui <- dashboardPage(
       tab_most_expressed_genes,
       tab_enriched_pathways,
       tab_gene_expression,
-      tab_bcr,
+      createImmuneRepertoireTab("bcr"),
+      createImmuneRepertoireTab("tcr"),
       tab_trajectory,
       tab_extra_material,
       tab_gene_id_conversion,

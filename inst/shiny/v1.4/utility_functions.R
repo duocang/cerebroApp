@@ -961,6 +961,11 @@ getBCR <- function() {
     return(data_set()$getBCR())
   }
 }
+getTCR <- function() {
+  if ( 'Cerebro_v1.3' %in% class(data_set()) ) {
+    return(data_set()$getTCR())
+  }
+}
 .has_scRepertoire <- function() {
   requireNamespace("scRepertoire", quietly = TRUE)
 }

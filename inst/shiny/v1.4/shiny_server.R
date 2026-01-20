@@ -300,8 +300,10 @@ server <- function(input, output, session) {
 
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/most_expressed_genes/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/enriched_pathways/server.R"), local = TRUE)
-  ## BCR tab
-  source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/bcr/server.R"), local = TRUE)
+  ## Immune Repertoire tabs (BCR/TCR)
+  source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/immune_repertoire/server.R"), local = TRUE)
+  createImmuneRepertoireServer("bcr")
+  createImmuneRepertoireServer("tcr")
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/trajectory/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/extra_material/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/analysis_info/server.R"), local = TRUE)
