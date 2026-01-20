@@ -104,10 +104,10 @@ exportFromSeurat <- function(
   }
 
   ## check if provided object is of class "Seurat"
-  if ( class(object) != "Seurat" ) {
+  if ( !inherits(object, "Seurat") ) {
     stop(
       paste0(
-        "Provided object is of class `", class(object), "` but must be of class 'Seurat'."
+        "Provided object is of class `", paste(class(object), collapse = ", "), "` but must be of class 'Seurat'."
       ),
       call. = FALSE
     )
@@ -236,7 +236,7 @@ exportFromSeurat <- function(
       Seurat::GetAssayData(object, assay = assay, slot = slot),
       silent = TRUE
     )
-    if (class(expression_data) == "try-error") {
+    if (inherits(expression_data, "try-error")) {
       stop(
         paste0(
           "Slot `", slot, "` could not be found in `", assay, "` assay slot."
@@ -256,7 +256,7 @@ exportFromSeurat <- function(
       Seurat::GetAssayData(object, assay = assay, layer = layer_name),
       silent = TRUE
     )
-    if (class(expression_data) == "try-error") {
+    if (inherits(expression_data, "try-error")) {
       stop(
         paste0("Layer `", layer_name, "` could not be found in `", assay, "` assay."),
         call. = FALSE
@@ -268,7 +268,7 @@ exportFromSeurat <- function(
   ## "matrix" format, and if the "DelayedArray" package is available
   if (
     use_delayed_array == TRUE &&
-    class(expression_data) %in% c('matrix','dgCMatrix') &&
+    inherits(expression_data, c('matrix','dgCMatrix')) &&
     requireNamespace("DelayedArray", quietly = TRUE)
   ) {
     if ( verbose ) {
@@ -593,6 +593,50 @@ exportFromSeurat <- function(
         object@misc$most_expressed_genes[[i]]
       )
     }
+  }
+
+  ##--------------------------------------------------------------------------##
+  ## BCR data
+  ##--------------------------------------------------------------------------##
+  if ( !is.null(object@misc$bcr_data) ) {
+    ## check if it's a list
+    if ( !is.list(object@misc$bcr_data) ) {
+      stop(
+        '`object@misc$bcr_data` is not a list.',
+        call. = FALSE
+      )
+    }
+    if ( verbose ) {
+      message(
+        paste0(
+          '[', format(Sys.time(), '%H:%M:%S'),
+          '] Extracting tables of BCR data...'
+        )
+      )
+    }
+    export$addBCRData(object@misc$bcr_data)
+  }
+
+  ##--------------------------------------------------------------------------##
+  ## TCR data
+  ##--------------------------------------------------------------------------##
+  if ( !is.null(object@misc$tcr_data) ) {
+    ## check if it's a list
+    if ( !is.list(object@misc$tcr_data) ) {
+      stop(
+        '`object@misc$tcr_data` is not a list.',
+        call. = FALSE
+      )
+    }
+    if ( verbose ) {
+      message(
+        paste0(
+          '[', format(Sys.time(), '%H:%M:%S'),
+          '] Extracting tables of TCR data...'
+        )
+      )
+    }
+    export$addTCRData(object@misc$tcr_data)
   }
 
   ##--------------------------------------------------------------------------##

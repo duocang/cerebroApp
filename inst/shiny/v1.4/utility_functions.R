@@ -956,6 +956,14 @@ getTrajectory <- function(method, name) {
     return(data_set()$getTrajectory(method, name))
   }
 }
+getBCR <- function() {
+  if ( 'Cerebro_v1.3' %in% class(data_set()) ) {
+    return(data_set()$getBCR())
+  }
+}
+.has_scRepertoire <- function() {
+  requireNamespace("scRepertoire", quietly = TRUE)
+}
 getExtraMaterialCategories <- function() {
   if ( 'Cerebro_v1.3' %in% class(data_set()) ) {
     return(data_set()$getExtraMaterialCategories())

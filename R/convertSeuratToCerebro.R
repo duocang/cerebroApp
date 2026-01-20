@@ -1,3 +1,39 @@
+#' @keywords internal
+#' @noRd
+.getExpressionMatrix <- function(seurat, assay = "RNA", slot = "counts", join_samples = TRUE) {
+  if (utils::compareVersion(as.character(utils::packageVersion("Seurat")), "5.0.0") < 0) {
+    # Seurat v4 及以下处理
+    expr_matrix <- Seurat::GetAssayData(seurat, assay = assay, slot = slot)
+  } else {
+    # Seurat v5+ 处理
+    # 检查是否需要合并多个样本层
+    if (join_samples && any(grepl("^counts\\.[0-9]+", Layers(seurat[[assay]])))) {
+      message("Merging multi-sample layers using JoinLayers...")
+      seurat <- Seurat::JoinLayers(seurat, assay = assay)
+    }
+
+    # 安全获取表达式矩阵的通用方法
+    expr_matrix <- tryCatch({
+      Seurat::GetAssayData(seurat, assay = assay, layer = slot)
+    }, error = function(e) {
+      # 优雅的降级处理
+      layer_names <- Layers(seurat[[assay]])
+      if ("counts" %in% layer_names) {
+        message("Falling back to 'counts' layer")
+        Seurat::GetAssayData(seurat, assay = assay, layer = "counts")
+      } else if (is.null(layer_names)) {
+        stop("No layers found in assay: ", assay)
+      } else {
+        message("Using first available layer: ", layer_names[1])
+        Seurat::GetAssayData(seurat, assay = assay, layer = layer_names[1])
+      }
+    })
+  }
+  return(expr_matrix)
+}
+
+
+
 #' @title
 #' Convert Seurat Object to Cerebro Format
 #'
@@ -114,7 +150,8 @@ convertSeuratToCerebro <- function(seurat_file,
                                     marker_file = NULL,
                                     marker_method = "Diff. Expression",
                                     add_most_expressed_genes = TRUE,
-                                    most_expressed_genes = NULL) {
+                                    most_expressed_genes = NULL,
+                                    bcr_file = NULL) {
   if (!file.exists(seurat_file)) {
     stop("seurat_file not found: ", seurat_file, call. = FALSE)
   }
@@ -388,11 +425,7 @@ convertSeuratToCerebro <- function(seurat_file,
     }
 
     # Get expression matrix
-    if (utils::compareVersion(as.character(utils::packageVersion("Seurat")), "5.0.0") < 0) {
-      expr_matrix <- Seurat::GetAssayData(seurat, assay = assay, slot = "counts")
-    } else {
-      expr_matrix <- Seurat::GetAssayData(seurat, assay = assay, layer = "counts")
-    }
+    expr_matrix <- .getExpressionMatrix(seurat, assay = assay, slot = "counts", join_samples = TRUE)
 
     # Initialize list structure
     if (is.null(seurat@misc$most_expressed_genes) || !is.list(seurat@misc$most_expressed_genes)) {
@@ -412,14 +445,16 @@ convertSeuratToCerebro <- function(seurat_file,
       group_results <- list()
 
       for (group_value in group_values) {
-        # Get cells belonging to this group value
-        cell_indices <- which(seurat@meta.data[[group_name]] == group_value)
+        # Get cells belonging to this group value using cell names (more robust)
+        cells_in_group <- rownames(seurat@meta.data)[seurat@meta.data[[group_name]] == group_value]
+        # Filter to cells that exist in the expression matrix
+        cells_in_group <- cells_in_group[cells_in_group %in% colnames(expr_matrix)]
 
-        if (length(cell_indices) == 0) next
+        if (length(cells_in_group) == 0) next
 
         # Calculate percentage of cells expressing each gene
-        expr_subset <- expr_matrix[, cell_indices, drop = FALSE]
-        gene_pct <- Matrix::rowSums(expr_subset > 0) / length(cell_indices) * 100
+        expr_subset <- expr_matrix[, cells_in_group, drop = FALSE]
+        gene_pct <- Matrix::rowSums(expr_subset > 0) / length(cells_in_group) * 100
 
         # Create data frame and sort by percentage
         gene_df <- data.frame(
@@ -452,6 +487,19 @@ convertSeuratToCerebro <- function(seurat_file,
     }
   }
 
+
+  # add BCR data if provided -----------------------------------------------##
+  if (!is.null(bcr_file) && nzchar(bcr_file)) {
+    if (!file.exists(bcr_file)) {
+      stop("bcr_file not found: ", bcr_file, call. = FALSE)
+    }
+
+    bcr_data <- qs::qread(bcr_file)
+    seurat@misc$bcr_data <- bcr_data
+    if (verbose) {
+      message(paste0("[INFO] Loaded BCR data from: ", bcr_file))
+    }
+  }
 
   # Get the base name for the file
   base_name <- gsub("\\.qs$", "", basename(seurat_file))

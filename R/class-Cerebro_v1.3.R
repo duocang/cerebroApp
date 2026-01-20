@@ -92,6 +92,12 @@ Cerebro_v1.3 <- R6::R6Class(
     #' format in a named \code{list} called `tables`
     extra_material = list(),
 
+    #' @field bcr_data \code{data.frame} that contains BCR data.
+    bcr_data = list(),
+
+    #' @field tcr_data \code{data.frame} that contains TCR data.
+    tcr_data = list(),
+
     ##------------------------------------------------------------------------##
     ## methods to interact with the object
     ##------------------------------------------------------------------------##
@@ -624,6 +630,22 @@ Cerebro_v1.3 <- R6::R6Class(
     },
 
     #' @description
+    #' Add BCR data.
+    #'
+    #' @param data \code{list} that contains BCR data.
+    addBCRData = function(data) {
+      self$bcr_data <- data
+    },
+
+    #' @description
+    #' Add TCR data.
+    #'
+    #' @param data \code{list} that contains TCR data.
+    addTCRData = function(data) {
+      self$tcr_data <- data
+    },
+
+    #' @description
     #' Retrieve names of grouping variables for which most expressed genes are
     #' available.
     #'
@@ -818,6 +840,24 @@ Cerebro_v1.3 <- R6::R6Class(
     #' trajectory.
     getTrajectory = function(method, name) {
       return(self$trajectories[[method]][[name]])
+    },
+
+    #' @description
+    #' Retrieve BCR data
+    #'
+    #' @return
+    #' BCR data stored in the object.
+    getBCR = function() {
+      return(self$bcr_data)
+    },
+
+    #' @description
+    #' Retrieve TCR data
+    #'
+    #' @return
+    #' TCR data stored in the object.
+    getTCR = function() {
+      return(self$tcr_data)
     },
 
     #' @description
@@ -1029,7 +1069,9 @@ Cerebro_v1.3 <- R6::R6Class(
           'marker genes:', private$showMarkerGenes(), '\n',
           'enriched pathways:', private$showEnrichedPathways(), '\n',
           'trajectories:', private$showTrajectories(), '\n',
-          'extra material:', private$showExtraMaterial(), '\n'
+          'extra material:', private$showExtraMaterial(), '\n',
+          'Names of BCR data:', names(self$bcr_data), '\n',
+          'Names of TCR data:', names(self$tcr_data), '\n'
         )
       )
     }
