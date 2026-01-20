@@ -1,38 +1,64 @@
 #' @keywords internal
 #' @noRd
-.getExpressionMatrix <- function(seurat, assay = "RNA", slot = "counts", join_samples = TRUE) {
-  if (utils::compareVersion(as.character(utils::packageVersion("Seurat")), "5.0.0") < 0) {
-    # Seurat v4 及以下处理
-    expr_matrix <- Seurat::GetAssayData(seurat, assay = assay, slot = slot)
-  } else {
-    # Seurat v5+ 处理
-    # 检查是否需要合并多个样本层
-    if (join_samples && any(grepl("^counts\\.[0-9]+", Layers(seurat[[assay]])))) {
-      message("Merging multi-sample layers using JoinLayers...")
-      seurat <- Seurat::JoinLayers(seurat, assay = assay)
-    }
+.loadImmuneRepertoireData <- function(file_path, data_type, verbose = TRUE) {
+  data_type_upper <- toupper(data_type)
 
-    # 安全获取表达式矩阵的通用方法
-    expr_matrix <- tryCatch({
-      Seurat::GetAssayData(seurat, assay = assay, layer = slot)
-    }, error = function(e) {
-      # 优雅的降级处理
-      layer_names <- Layers(seurat[[assay]])
-      if ("counts" %in% layer_names) {
-        message("Falling back to 'counts' layer")
-        Seurat::GetAssayData(seurat, assay = assay, layer = "counts")
-      } else if (is.null(layer_names)) {
-        stop("No layers found in assay: ", assay)
-      } else {
-        message("Using first available layer: ", layer_names[1])
-        Seurat::GetAssayData(seurat, assay = assay, layer = layer_names[1])
-      }
-    })
+  if (is.null(file_path) || !nzchar(file_path)) {
+    return(NULL)
   }
-  return(expr_matrix)
+
+  if (!file.exists(file_path)) {
+    stop(
+      data_type_upper, " file not found: ", file_path, "\n",
+      "Suggestions:\n",
+      "  1. Check if the file path is correct\n",
+      "  2. Verify the file extension is .qs\n",
+      "  3. Ensure you have read permissions for the file"
+    )
+  }
+
+  data <- tryCatch({
+    qs::qread(file_path)
+  }, error = function(e) {
+    stop(
+      "Failed to read ", data_type_upper, " data from: ", file_path, "\n",
+      "  Error: ", e$message, "\n",
+      "Suggestions:\n",
+      "  1. Verify the file is a valid .qs file\n",
+      "  2. Check if the file was created using qs::qsave()\n",
+      "  3. Try reading the file directly: qs::qread('", file_path, "')"
+    )
+  })
+
+  if (is.null(data)) {
+    stop(
+      data_type_upper, " data is NULL after reading from: ", file_path, "\n",
+      "Suggestions:\n",
+      "  1. Check if the source file contains valid data\n",
+      "  2. Verify the file was not corrupted\n",
+      "  3. Try recreating the .qs file"
+    )
+  }
+
+  if (!is.list(data) || length(data) == 0) {
+    stop(
+      data_type_upper, " data is not a valid list or is empty.\n",
+      "  Expected: A list of contig annotations\n",
+      "  Received: ", class(data)[1], " with length ", length(data), "\n",
+      "Suggestions:\n",
+      "  1. Verify the data structure matches scRepertoire format\n",
+      "  2. Check if the data was properly saved using qs::qsave()\n",
+      "  3. Ensure the data contains contig annotations"
+    )
+  }
+
+  if (verbose) {
+    message("[INFO] Loaded ", data_type_upper, " data from: ", file_path)
+    message("[INFO] ", data_type_upper, " data contains ", length(data), " samples")
+  }
+
+  return(data)
 }
-
-
 
 #' @title
 #' Convert Seurat Object to Cerebro Format
@@ -88,6 +114,12 @@
 #'   Can be either a data.frame (will be converted to list(unknown = ...)) or a
 #'   list of data.frames. If list elements are unnamed, they will be assigned
 #'   names like "unknown1", "unknown2", etc.; default: \code{NULL}.
+#' @param bcr_file Character string specifying the path to a BCR data file
+#'   (.qs format) to be added to the Seurat object's misc slot; default:
+#'   \code{NULL}.
+#' @param tcr_file Character string specifying the path to a TCR data file
+#'   (.qs format) to be added to the Seurat object's misc slot; default:
+#'   \code{NULL}.
 #'
 #' @return
 #' This function does not return a value. It saves a Cerebro object (.crb file)
@@ -151,7 +183,8 @@ convertSeuratToCerebro <- function(seurat_file,
                                     marker_method = "Diff. Expression",
                                     add_most_expressed_genes = TRUE,
                                     most_expressed_genes = NULL,
-                                    bcr_file = NULL) {
+                                    bcr_file = NULL,
+                                    tcr_file = NULL) {
   if (!file.exists(seurat_file)) {
     stop("seurat_file not found: ", seurat_file, call. = FALSE)
   }
@@ -425,7 +458,7 @@ convertSeuratToCerebro <- function(seurat_file,
     }
 
     # Get expression matrix
-    expr_matrix <- .getExpressionMatrix(seurat, assay = assay, slot = "counts", join_samples = TRUE)
+    expr_matrix <- .getExpressionMatrix(seurat, assay = assay, slot = slot, join_samples = TRUE)
 
     # Initialize list structure
     if (is.null(seurat@misc$most_expressed_genes) || !is.list(seurat@misc$most_expressed_genes)) {
@@ -489,16 +522,15 @@ convertSeuratToCerebro <- function(seurat_file,
 
 
   # add BCR data if provided -----------------------------------------------##
-  if (!is.null(bcr_file) && nzchar(bcr_file)) {
-    if (!file.exists(bcr_file)) {
-      stop("bcr_file not found: ", bcr_file, call. = FALSE)
-    }
-
-    bcr_data <- qs::qread(bcr_file)
+  bcr_data <- .loadImmuneRepertoireData(bcr_file, "BCR", verbose)
+  if (!is.null(bcr_data)) {
     seurat@misc$bcr_data <- bcr_data
-    if (verbose) {
-      message(paste0("[INFO] Loaded BCR data from: ", bcr_file))
-    }
+  }
+
+  # add TCR data if provided -----------------------------------------------##
+  tcr_data <- .loadImmuneRepertoireData(tcr_file, "TCR", verbose)
+  if (!is.null(tcr_data)) {
+    seurat@misc$tcr_data <- tcr_data
   }
 
   # Get the base name for the file
