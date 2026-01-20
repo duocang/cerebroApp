@@ -64,6 +64,7 @@ idleTimer();", timeoutSeconds*1000, timeoutSeconds, timeoutSeconds*1000)
 ##----------------------------------------------------------------------------##
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/load_data/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/overview/UI.R"), local = TRUE)
+source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/spatial/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/groups/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/marker_genes/UI.R"), local = TRUE)
 source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/gene_expression/UI.R"), local = TRUE)
@@ -93,6 +94,7 @@ ui <- dashboardPage(
       id = "sidebar",
       menuItem("Data info", tabName = "loadData", icon = icon("info"), selected = TRUE),
       menuItem("Main", tabName = "overview", icon = icon("home")),
+      menuItem("Spatial", tabName = "spatial", icon = icon("images")),
       menuItem("Groups", tabName = "groups", icon = icon("layer-group")),
       menuItem("Most expressed genes", tabName = "mostExpressedGenes", icon = icon("bullhorn")),
       menuItem("Marker genes", tabName = "markerGenes", icon = icon("list-alt")),
@@ -133,6 +135,7 @@ ui <- dashboardPage(
     tabItems(
       tab_load_data,
       tab_overview,
+      tab_spatial,
       tab_groups,
       tab_marker_genes,
       tab_most_expressed_genes,

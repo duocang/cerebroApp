@@ -291,6 +291,7 @@ server <- function(input, output, session) {
   ##--------------------------------------------------------------------------##
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/load_data/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/overview/server.R"), local = TRUE)
+  source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/spatial/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/groups/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/marker_genes/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/gene_expression/server.R"), local = TRUE)

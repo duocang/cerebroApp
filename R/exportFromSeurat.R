@@ -517,6 +517,182 @@ exportFromSeurat <- function(
   }
 
   ##--------------------------------------------------------------------------##
+  ## spatial data
+  ##--------------------------------------------------------------------------##
+  if ( verbose ) {
+    message(
+      paste0(
+        '[', format(Sys.time(), '%H:%M:%S'),
+        '] Checking for spatial data...'
+      )
+    )
+  }
+
+  seurat_version <- as.character(utils::packageVersion("Seurat"))
+  is_seurat_v5 <- utils::compareVersion(seurat_version, "5.0.0") >= 0
+
+  if ( is_seurat_v5 && !is.null(object@images) && length(object@images) > 0 ) {
+    if ( verbose ) {
+      message(
+        paste0(
+          '[', format(Sys.time(), '%H:%M:%S'), '] ',
+          'Spatial data found. Extracting spatial coordinates...'
+        )
+      )
+    }
+
+    for ( image_name in names(object@images) ) {
+      tryCatch({
+        image_obj <- object@images[[image_name]]
+
+        if ( inherits(image_obj, "VisiumV1") || inherits(image_obj, "VisiumV2") ) {
+          coords <- Seurat::GetTissueCoordinates(image_obj)
+          if ( !is.null(coords) && nrow(coords) > 0 ) {
+            coords_df <- as.data.frame(coords)
+            rownames(coords_df) <- coords_df$cell
+            coords_df <- coords_df[, c("imagerow", "imagecol"), drop = FALSE]
+            projection_name <- paste0("Spatial_", image_name)
+            export$addProjection(projection_name, coords_df)
+            if ( verbose ) {
+              message(
+                paste0(
+                  '[', format(Sys.time(), '%H:%M:%S'), '] ',
+                  'Added spatial projection: ', projection_name,
+                  ' (', nrow(coords_df), ' cells)'
+                )
+              )
+            }
+          }
+        } else if ( inherits(image_obj, "FOV") || inherits(image_obj, "Xenium") ) {
+          tryCatch({
+            # Seurat v5 FOV object (covers Xenium, CosMx, MERSCOPE, etc.)
+            # We prioritize extracting 'centroids' which provide x/y coordinates for each cell
+            coords <- NULL
+
+            # Try 1: GetTissueCoordinates with which='centroids' (standard v5)
+            coords <- try(Seurat::GetTissueCoordinates(image_obj, which = "centroids"), silent = TRUE)
+
+            # Try 2: GetTissueCoordinates default
+            if ( inherits(coords, "try-error") || is.null(coords) ) {
+              coords <- try(Seurat::GetTissueCoordinates(image_obj), silent = TRUE)
+            }
+
+            # Try 3: Direct access to coordinates slot (legacy/specific objects)
+            if ( (inherits(coords, "try-error") || is.null(coords)) && !is.null(image_obj@coordinates) ) {
+              coords <- image_obj@coordinates
+            }
+
+            if ( !inherits(coords, "try-error") && !is.null(coords) && nrow(coords) > 0 ) {
+              coords_df <- as.data.frame(coords)
+
+              # Ensure we have cell names as rownames
+              if ( "cell" %in% colnames(coords_df) ) {
+                rownames(coords_df) <- coords_df$cell
+              }
+
+              # Extract x and y coordinates
+              coord_cols <- intersect(c("x", "y"), colnames(coords_df))
+
+              if ( length(coord_cols) == 2 ) {
+                coords_df <- coords_df[, coord_cols, drop = FALSE]
+                projection_name <- paste0("Spatial_", image_name)
+                export$addProjection(projection_name, coords_df)
+                if ( verbose ) {
+                  message(
+                    paste0(
+                      '[', format(Sys.time(), '%H:%M:%S'), '] ',
+                      'Added spatial projection: ', projection_name,
+                      ' (', nrow(coords_df), ' cells)'
+                    )
+                  )
+                }
+              }
+            }
+          }, error = function(e) {
+            if ( verbose ) {
+              message(
+                paste0(
+                  '[', format(Sys.time(), '%H:%M:%S'), '] ',
+                  'Could not extract FOV/Xenium coordinates: ', e$message
+                )
+              )
+            }
+          })
+        } else if ( inherits(image_obj, "STARmap") || inherits(image_obj, "SlideSeq") ) {
+          coords <- Seurat::GetTissueCoordinates(image_obj)
+          if ( !is.null(coords) && nrow(coords) > 0 ) {
+            coords_df <- as.data.frame(coords)
+            rownames(coords_df) <- coords_df$cell
+            coord_cols <- intersect(c("x", "y"), colnames(coords_df))
+            if ( length(coord_cols) == 2 ) {
+              coords_df <- coords_df[, coord_cols, drop = FALSE]
+              projection_name <- paste0("Spatial_", image_name)
+              export$addProjection(projection_name, coords_df)
+              if ( verbose ) {
+                message(
+                  paste0(
+                    '[', format(Sys.time(), '%H:%M:%S'), '] ',
+                    'Added spatial projection: ', projection_name,
+                    ' (', nrow(coords_df), ' cells)'
+                  )
+                )
+              }
+            }
+          }
+        } else if ( inherits(image_obj, "Merged") ) {
+          for ( fov_name in names(image_obj@images) ) {
+            tryCatch({
+              fov_image <- image_obj@images[[fov_name]]
+              if ( !is.null(fov_image@coordinates) ) {
+                coords <- fov_image@coordinates
+                if ( nrow(coords) > 0 ) {
+                  coords_df <- as.data.frame(coords)
+                  rownames(coords_df) <- coords$cell
+                  coord_cols <- intersect(c("x", "y"), colnames(coords_df))
+                  if ( length(coord_cols) == 2 ) {
+                    coords_df <- coords_df[, coord_cols, drop = FALSE]
+                    projection_name <- paste0("Spatial_", image_name, "_", fov_name)
+                    export$addProjection(projection_name, coords_df)
+                    if ( verbose ) {
+                      message(
+                        paste0(
+                          '[', format(Sys.time(), '%H:%M:%S'), '] ',
+                          'Added spatial projection: ', projection_name,
+                          ' (', nrow(coords_df), ' cells)'
+                        )
+                      )
+                    }
+                  }
+                }
+              }
+            }, error = function(e) {
+              if ( verbose ) {
+                message(
+                  paste0(
+                    '[', format(Sys.time(), '%H:%M:%S'), '] ',
+                    'Could not extract coordinates from FOV ', fov_name,
+                    ': ', e$message
+                  )
+                )
+              }
+            })
+          }
+        }
+      }, error = function(e) {
+        if ( verbose ) {
+          message(
+            paste0(
+              '[', format(Sys.time(), '%H:%M:%S'), '] ',
+              'Could not extract spatial data from image ', image_name,
+              ': ', e$message
+            )
+          )
+        }
+      })
+    }
+  }
+
+  ##--------------------------------------------------------------------------##
   ## group trees
   ##--------------------------------------------------------------------------##
   if ( !is.null(object@misc$trees) ) {
