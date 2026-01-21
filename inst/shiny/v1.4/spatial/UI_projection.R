@@ -63,6 +63,14 @@ output[["spatial_projection_UI"]] <- renderUI({
             class = "btn-xs",
             style = "margin-right: 3px"
           ),
+          actionButton(
+            inputId = "spatial_projection_reset_rotation",
+            label = "Reset",
+            title = "Reset rotation to 0 degrees.",
+            icon = NULL,
+            class = "btn-xs",
+            style = "margin-right: 3px; position: relative; z-index: 9999;"
+          ),
           #shinyFiles::shinySaveButton(
            # "spatial_projection_export",
             #label = "export to PDF",
