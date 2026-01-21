@@ -53,20 +53,21 @@ const spatial_projection_layout_2D = {
      }
      /* Custom Legend Styles */
      #spatial_projection_legend {
-       position: absolute;
-       top: 10px;
-       right: 10px;
-       background: rgba(255, 255, 255, 0.9);
-       border: 1px solid #ccc;
-       border-radius: 4px;
-       padding: 8px;
-       max-height: 300px;
-       overflow-y: auto;
-       z-index: 1000;
-       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-       font-family: "Open Sans", verdana, arial, sans-serif;
-     }
-     .custom-legend-item {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        font-family: "Open Sans", verdana, arial, sans-serif;
+        cursor: move;
+      }
+      .custom-legend-item {
        display: flex;
        align-items: center;
        margin-bottom: 4px;
@@ -99,6 +100,75 @@ const spatial_projection_layout_2D = {
 })();
 
 // Custom Legend Helper Functions
+shinyjs.makeDraggable = function (el) {
+  let isDragging = false;
+  let hasMoved = false;
+  let startX, startY, initialLeft, initialTop;
+
+  el.onmousedown = function (e) {
+    // Only left mouse button
+    if (e.button !== 0) return;
+
+    isDragging = true;
+    hasMoved = false;
+    startX = e.clientX;
+    startY = e.clientY;
+
+    // Get current position
+    const rect = el.getBoundingClientRect();
+    const parentRect = el.parentElement.getBoundingClientRect();
+
+    // Convert to relative position (left/top)
+    initialLeft = rect.left - parentRect.left;
+    initialTop = rect.top - parentRect.top;
+
+    // Switch to left/top positioning if not already
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+    el.style.left = initialLeft + 'px';
+    el.style.top = initialTop + 'px';
+
+    el.style.cursor = 'grabbing';
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+
+    // Prevent default text selection
+    e.preventDefault();
+  };
+
+  function onMouseMove(e) {
+    if (!isDragging) return;
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (dx !== 0 || dy !== 0) {
+      hasMoved = true;
+      el.dataset.isDragging = 'true';
+    }
+
+    el.style.left = initialLeft + dx + 'px';
+    el.style.top = initialTop + dy + 'px';
+  }
+
+  function onMouseUp(e) {
+    isDragging = false;
+    el.style.cursor = 'move';
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+
+    if (hasMoved) {
+      // Keep the flag for a short moment to block click events on children
+      setTimeout(() => {
+        el.dataset.isDragging = 'false';
+      }, 50);
+    } else {
+      el.dataset.isDragging = 'false';
+    }
+  }
+};
+
 shinyjs.createCustomLegend = function (traces, colors) {
   const plotContainer = document.getElementById('spatial_projection');
   if (!plotContainer) return;
@@ -116,6 +186,9 @@ shinyjs.createCustomLegend = function (traces, colors) {
     legendContainer.id = 'spatial_projection_legend';
     parent.appendChild(legendContainer);
   }
+
+  // Enable dragging
+  shinyjs.makeDraggable(legendContainer);
 
   // Reset content
   legendContainer.innerHTML = '';
@@ -139,6 +212,8 @@ shinyjs.createCustomLegend = function (traces, colors) {
 
     // Toggle visibility on click
     item.onclick = function () {
+      if (legendContainer.dataset.isDragging === 'true') return;
+
       const plot = document.getElementById('spatial_projection');
       // Check current visibility status (default is visible/true)
       // We assume trace index corresponds to legend index
