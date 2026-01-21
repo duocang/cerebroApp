@@ -7,7 +7,7 @@ const spatial_projection_layout_2D = {
     r: 50,
     b: 50,
     t: 50,
-    pad: 4
+    pad: 4,
   },
   legend: {
     itemsizing: 'constant',
@@ -17,21 +17,21 @@ const spatial_projection_layout_2D = {
     mirror: true,
     showline: true,
     zeroline: false,
-    range: []
+    range: [],
   },
   yaxis: {
     autorange: true,
     mirror: true,
     showline: true,
     zeroline: false,
-    range: []
+    range: [],
   },
   hoverlabel: {
     font: {
-      size: 11
+      size: 11,
     },
-    align: 'left'
-  }
+    align: 'left',
+  },
 };
 
 // layout for 3D projections
@@ -43,7 +43,7 @@ const spatial_projection_layout_3D = {
     r: 50,
     b: 50,
     t: 50,
-    pad: 4
+    pad: 4,
   },
   legend: {
     itemsizing: 'constant',
@@ -54,28 +54,28 @@ const spatial_projection_layout_3D = {
       mirror: true,
       showline: true,
       zeroline: false,
-      range: []
+      range: [],
     },
     yaxis: {
       autorange: true,
       mirror: true,
       showline: true,
       zeroline: false,
-      range: []
+      range: [],
     },
     zaxis: {
       autorange: true,
       mirror: true,
       showline: true,
-      zeroline: false
+      zeroline: false,
     },
   },
   hoverlabel: {
     font: {
-      size: 11
+      size: 11,
     },
-    align: 'left'
-  }
+    align: 'left',
+  },
 };
 
 // structure of input data
@@ -83,7 +83,7 @@ const spatial_projection_default_params = {
   meta: {
     color_type: '',
     traces: [],
-    color_variable: ''
+    color_variable: '',
   },
   data: {
     x: [],
@@ -95,48 +95,158 @@ const spatial_projection_default_params = {
     line: {},
     x_range: [],
     y_range: [],
-    reset_axes: false
+    reset_axes: false,
   },
   hover: {
     hoverinfo: '',
-    text: []
+    text: [],
   },
   group_centers: {
     group: [],
     x: [],
     y: [],
-    z: []
-  }
-}
+    z: [],
+  },
+};
 
 // update 2D projection with continuous coloring
-shinyjs.updatePlot2DContinuousSpatial = function(params) {
+shinyjs.updatePlot2DContinuousSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   const data = [];
-  data.push(
-    {
-      x: params.data.x,
-      y: params.data.y,
+  data.push({
+    x: params.data.x,
+    y: params.data.y,
+    mode: 'markers',
+    type: 'scattergl',
+    marker: {
+      size: params.data.point_size,
+      opacity: params.data.point_opacity,
+      line: params.data.point_line,
+      color: params.data.color,
+      colorscale: 'YlGnBu',
+      reversescale: true,
+      colorbar: {
+        title: {
+          text: params.meta.color_variable,
+        },
+      },
+    },
+    hoverinfo: params.hover.hoverinfo,
+    text: params.hover.text,
+    showlegend: false,
+  });
+  const layout_here = Object.assign(spatial_projection_layout_2D);
+  if (params.data.reset_axes) {
+    layout_here.xaxis['autorange'] = true;
+    layout_here.yaxis['autorange'] = true;
+  } else {
+    layout_here.xaxis['autorange'] = false;
+    layout_here.xaxis['range'] = params.data.x_range;
+    layout_here.yaxis['autorange'] = false;
+    layout_here.yaxis['range'] = params.data.y_range;
+  }
+  Plotly.react('spatial_projection', data, layout_here);
+};
+
+// update 3D projection with continuous coloring
+shinyjs.updatePlot3DContinuousSpatial = function (params) {
+  params = shinyjs.getParams(params, spatial_projection_default_params);
+  const data = [];
+  data.push({
+    x: params.data.x,
+    y: params.data.y,
+    z: params.data.z,
+    mode: 'markers',
+    type: 'scatter3d',
+    marker: {
+      size: params.data.point_size,
+      opacity: params.data.point_opacity,
+      line: params.data.point_line,
+      color: params.data.color,
+      colorscale: 'YlGnBu',
+      reversescale: true,
+      colorbar: {
+        title: {
+          text: params.meta.color_variable,
+        },
+      },
+    },
+    hoverinfo: params.hover.hoverinfo,
+    text: params.hover.text,
+    showlegend: false,
+  });
+  Plotly.react('spatial_projection', data, spatial_projection_layout_3D);
+};
+
+shinyjs.rotateSpatialProjection = function (angle) {
+  const plotContainer = document.getElementById('spatial_projection');
+  if (plotContainer) {
+    const parentContainer = plotContainer.parentElement;
+    const angleRad = (angle * Math.PI) / 180;
+    const absCos = Math.abs(Math.cos(angleRad));
+    const absSin = Math.abs(Math.sin(angleRad));
+
+    const containerWidth = parentContainer.clientWidth;
+    const containerHeight = parentContainer.clientHeight;
+
+    const originalWidth = plotContainer.offsetWidth;
+    const originalHeight = plotContainer.offsetHeight;
+
+    const rotatedWidth = originalWidth * absCos + originalHeight * absSin;
+    const rotatedHeight = originalWidth * absSin + originalHeight * absCos;
+
+    const scaleX = containerWidth / rotatedWidth;
+    const scaleY = containerHeight / rotatedHeight;
+    const scale = Math.min(scaleX, scaleY, 1);
+
+    plotContainer.style.transform = `rotate(${angle}deg) scale(${scale})`;
+    plotContainer.style.transition = 'transform 0.3s ease';
+    plotContainer.style.transformOrigin = 'center center';
+  }
+};
+
+// update 2D projection with categorical coloring
+shinyjs.updatePlot2DCategoricalSpatial = function (params) {
+  params = shinyjs.getParams(params, spatial_projection_default_params);
+  const data = [];
+  for (let i = 0; i < params.data.x.length; i++) {
+    data.push({
+      x: params.data.x[i],
+      y: params.data.y[i],
+      name: params.meta.traces[i],
       mode: 'markers',
       type: 'scattergl',
       marker: {
         size: params.data.point_size,
         opacity: params.data.point_opacity,
         line: params.data.point_line,
-        color: params.data.color,
-        colorscale: 'YlGnBu',
-        reversescale: true,
-        colorbar: {
-          title: {
-            text: params.meta.color_variable
-          }
-        }
+        color: params.data.color[i],
       },
       hoverinfo: params.hover.hoverinfo,
-      text: params.hover.text,
-      showlegend: false
-    }
-  );
+      text: params.hover.text[i],
+      hoverlabel: {
+        bgcolor: params.data.color[i],
+      },
+      showlegend: true,
+    });
+  }
+  if (params.group_centers.group.length >= 1) {
+    data.push({
+      x: params.group_centers.x,
+      y: params.group_centers.y,
+      text: params.group_centers.group,
+      type: 'scattergl',
+      mode: 'text',
+      name: 'Labels',
+      textposition: 'middle center',
+      textfont: {
+        color: '#000000',
+        size: 16,
+      },
+      hoverinfo: 'skip',
+      inherit: false,
+    });
+  }
   const layout_here = Object.assign(spatial_projection_layout_2D);
   if (params.data.reset_axes) {
     layout_here.xaxis['autorange'] = true;
@@ -148,146 +258,51 @@ shinyjs.updatePlot2DContinuousSpatial = function(params) {
     layout_here.yaxis['range'] = params.data.y_range;
   }
   Plotly.react('spatial_projection', data, layout_here);
-}
+};
 
-// update 3D projection with continuous coloring
-shinyjs.updatePlot3DContinuousSpatial = function(params) {
+// update 3D projection with categorical coloring
+shinyjs.updatePlot3DCategoricalSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   const data = [];
-  data.push(
-    {
-      x: params.data.x,
-      y: params.data.y,
-      z: params.data.z,
+  for (let i = 0; i < params.data.x.length; i++) {
+    data.push({
+      x: params.data.x[i],
+      y: params.data.y[i],
+      z: params.data.z[i],
+      name: params.meta.traces[i],
       mode: 'markers',
       type: 'scatter3d',
       marker: {
         size: params.data.point_size,
         opacity: params.data.point_opacity,
         line: params.data.point_line,
-        color: params.data.color,
-        colorscale: 'YlGnBu',
-        reversescale: true,
-        colorbar: {
-          title: {
-            text: params.meta.color_variable
-          }
-        }
+        color: params.data.color[i],
       },
       hoverinfo: params.hover.hoverinfo,
-      text: params.hover.text,
-      showlegend: false
-    }
-  );
-  Plotly.react('spatial_projection', data, spatial_projection_layout_3D);
-}
-
-// update 2D projection with categorical coloring
-shinyjs.updatePlot2DCategoricalSpatial = function(params) {
-  params = shinyjs.getParams(params, spatial_projection_default_params);
-  const data = [];
-  for (let i = 0; i < params.data.x.length; i++) {
-    data.push(
-      {
-        x: params.data.x[i],
-        y: params.data.y[i],
-        name: params.meta.traces[i],
-        mode: 'markers',
-        type: 'scattergl',
-        marker: {
-          size: params.data.point_size,
-          opacity: params.data.point_opacity,
-          line: params.data.point_line,
-          color: params.data.color[i]
-        },
-        hoverinfo: params.hover.hoverinfo,
-        text: params.hover.text[i],
-        hoverlabel: {
-          bgcolor: params.data.color[i]
-        },
-        showlegend: true
-      }
-    );
+      text: params.hover.text[i],
+      hoverlabel: {
+        bgcolor: params.data.color[i],
+      },
+      showlegend: true,
+    });
   }
   if (params.group_centers.group.length >= 1) {
-    data.push(
-      {
-        x: params.group_centers.x,
-        y: params.group_centers.y,
-        text: params.group_centers.group,
-        type: 'scattergl',
-        mode: 'text',
-        name: 'Labels',
-        textposition: 'middle center',
-        textfont: {
-          color: '#000000',
-          size: 16
-        },
-        hoverinfo: 'skip',
-        inherit: false
-      }
-    );
-  }
-  const layout_here = Object.assign(spatial_projection_layout_2D);
-  if (params.data.reset_axes) {
-    layout_here.xaxis['autorange'] = true;
-    layout_here.yaxis['autorange'] = true;
-  } else {
-    layout_here.xaxis['autorange'] = false;
-    layout_here.xaxis['range'] = params.data.x_range;
-    layout_here.yaxis['autorange'] = false;
-    layout_here.yaxis['range'] = params.data.y_range;
-  }
-  Plotly.react('spatial_projection', data, layout_here);
-}
-
-// update 3D projection with categorical coloring
-shinyjs.updatePlot3DCategoricalSpatial = function(params) {
-  params = shinyjs.getParams(params, spatial_projection_default_params);
-  const data = [];
-  for (let i = 0; i < params.data.x.length; i++) {
-    data.push(
-      {
-        x: params.data.x[i],
-        y: params.data.y[i],
-        z: params.data.z[i],
-        name: params.meta.traces[i],
-        mode: 'markers',
-        type: 'scatter3d',
-        marker: {
-          size: params.data.point_size,
-          opacity: params.data.point_opacity,
-          line: params.data.point_line,
-          color: params.data.color[i]
-        },
-        hoverinfo: params.hover.hoverinfo,
-        text: params.hover.text[i],
-        hoverlabel: {
-          bgcolor: params.data.color[i]
-        },
-        showlegend: true
-      }
-    );
-  }
-  if (params.group_centers.group.length >= 1) {
-    data.push(
-      {
-        x: params.group_centers.x,
-        y: params.group_centers.y,
-        z: params.group_centers.z,
-        text: params.group_centers.group,
-        type: 'scatter3d',
-        mode: 'text',
-        name: 'Labels',
-        textposition: 'middle center',
-        textfont: {
-          color: '#000000',
-          size: 16
-        },
-        hoverinfo: 'skip',
-        inherit: false
-      }
-    );
+    data.push({
+      x: params.group_centers.x,
+      y: params.group_centers.y,
+      z: params.group_centers.z,
+      text: params.group_centers.group,
+      type: 'scatter3d',
+      mode: 'text',
+      name: 'Labels',
+      textposition: 'middle center',
+      textfont: {
+        color: '#000000',
+        size: 16,
+      },
+      hoverinfo: 'skip',
+      inherit: false,
+    });
   }
   Plotly.react('spatial_projection', data, spatial_projection_layout_3D);
-}
+};

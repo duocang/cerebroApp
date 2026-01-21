@@ -90,10 +90,20 @@ output[["spatial_projection_UI"]] <- renderUI({
             plotly::plotlyOutput(
               "spatial_projection",
               width = "auto",
-              height = "85vh"
+              height = "65vh"
             ),
             type = 8,
             hide.ui = FALSE
+          ),
+          tags$br(),
+          sliderInput(
+            inputId = "spatial_projection_rotation",
+            label = "Rotation",
+            min = 0,
+            max = 360,
+            value = 0,
+            step = 1,
+            width = "100%"
           ),
           tags$br(),
           htmlOutput("spatial_number_of_selected_cells"),

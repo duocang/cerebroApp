@@ -23,7 +23,8 @@ tab_spatial <- tabItem(
       "updatePlot2DContinuousSpatial",
       "updatePlot3DContinuousSpatial",
       "updatePlot2DCategoricalSpatial",
-      "updatePlot3DCategoricalSpatial"
+      "updatePlot3DCategoricalSpatial",
+      "rotateSpatialProjection"
     )
   ),
   uiOutput("spatial_projection_UI"),
