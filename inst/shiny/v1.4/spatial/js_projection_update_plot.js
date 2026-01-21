@@ -47,13 +47,122 @@ const spatial_projection_layout_2D = {
       transform-origin: center center;
     }
     #spatial_projection .hoverlayer .hovertext {
-      transform: rotate(var(--spatial-rotation));
-      transform-box: fill-box;
-      transform-origin: center center;
-    }
-  `;
+       transform: rotate(var(--spatial-rotation));
+       transform-box: fill-box;
+       transform-origin: center center;
+     }
+     /* Custom Legend Styles */
+     #spatial_projection_legend {
+       position: absolute;
+       top: 10px;
+       right: 10px;
+       background: rgba(255, 255, 255, 0.9);
+       border: 1px solid #ccc;
+       border-radius: 4px;
+       padding: 8px;
+       max-height: 300px;
+       overflow-y: auto;
+       z-index: 1000;
+       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+       font-family: "Open Sans", verdana, arial, sans-serif;
+     }
+     .custom-legend-item {
+       display: flex;
+       align-items: center;
+       margin-bottom: 4px;
+       cursor: pointer;
+       user-select: none;
+     }
+     .custom-legend-item:last-child {
+       margin-bottom: 0;
+     }
+     .legend-color-box {
+       width: 14px;
+       height: 14px;
+       margin-right: 8px;
+       border-radius: 3px;
+       flex-shrink: 0;
+     }
+     .legend-text {
+       font-size: 12px;
+       color: #2a3f5f;
+     }
+     .legend-item-hidden .legend-text {
+       text-decoration: line-through;
+       color: #aaa;
+     }
+     .legend-item-hidden .legend-color-box {
+       opacity: 0.5;
+     }
+   `;
   document.head.appendChild(style);
 })();
+
+// Custom Legend Helper Functions
+shinyjs.createCustomLegend = function (traces, colors) {
+  const plotContainer = document.getElementById('spatial_projection');
+  if (!plotContainer) return;
+
+  // Ensure parent has relative positioning
+  const parent = plotContainer.parentElement;
+  if (getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  // Find or create legend container
+  let legendContainer = document.getElementById('spatial_projection_legend');
+  if (!legendContainer) {
+    legendContainer = document.createElement('div');
+    legendContainer.id = 'spatial_projection_legend';
+    parent.appendChild(legendContainer);
+  }
+
+  // Reset content
+  legendContainer.innerHTML = '';
+  legendContainer.style.display = 'block';
+
+  // Create legend items
+  traces.forEach((traceName, index) => {
+    const item = document.createElement('div');
+    item.className = 'custom-legend-item';
+
+    const colorBox = document.createElement('span');
+    colorBox.className = 'legend-color-box';
+    colorBox.style.backgroundColor = colors[index];
+
+    const text = document.createElement('span');
+    text.className = 'legend-text';
+    text.innerText = traceName;
+
+    item.appendChild(colorBox);
+    item.appendChild(text);
+
+    // Toggle visibility on click
+    item.onclick = function () {
+      const plot = document.getElementById('spatial_projection');
+      // Check current visibility status (default is visible/true)
+      // We assume trace index corresponds to legend index
+      let isVisible = true;
+      if (plot.data && plot.data[index]) {
+        isVisible = plot.data[index].visible !== false && plot.data[index].visible !== 'legendonly';
+      }
+
+      const newVisible = isVisible ? false : true;
+      Plotly.restyle('spatial_projection', { visible: newVisible }, [index]);
+
+      item.classList.toggle('legend-item-hidden', isVisible);
+    };
+
+    legendContainer.appendChild(item);
+  });
+};
+
+shinyjs.removeCustomLegend = function () {
+  const legendContainer = document.getElementById('spatial_projection_legend');
+  if (legendContainer) {
+    legendContainer.style.display = 'none';
+  }
+};
 
 // layout for 3D projections
 const spatial_projection_layout_3D = {
@@ -137,6 +246,7 @@ const spatial_projection_default_params = {
 // update 2D projection with continuous coloring
 shinyjs.updatePlot2DContinuousSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
+  shinyjs.removeCustomLegend();
   const data = [];
   data.push({
     x: params.data.x,
@@ -186,6 +296,7 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
 // update 3D projection with continuous coloring
 shinyjs.updatePlot3DContinuousSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
+  shinyjs.removeCustomLegend();
   const data = [];
   data.push({
     x: params.data.x,
@@ -269,6 +380,7 @@ shinyjs.getContainerDimensions = function () {
 // update 2D projection with categorical coloring
 shinyjs.updatePlot2DCategoricalSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
+  shinyjs.createCustomLegend(params.meta.traces, params.data.color);
   const data = [];
   for (let i = 0; i < params.data.x.length; i++) {
     data.push({
@@ -288,7 +400,7 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
       hoverlabel: {
         bgcolor: params.data.color[i],
       },
-      showlegend: true,
+      showlegend: false,
     });
   }
   if (params.group_centers.group.length >= 1) {
@@ -334,6 +446,7 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
 // update 3D projection with categorical coloring
 shinyjs.updatePlot3DCategoricalSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
+  shinyjs.createCustomLegend(params.meta.traces, params.data.color);
   const data = [];
   for (let i = 0; i < params.data.x.length; i++) {
     data.push({
@@ -354,7 +467,7 @@ shinyjs.updatePlot3DCategoricalSpatial = function (params) {
       hoverlabel: {
         bgcolor: params.data.color[i],
       },
-      showlegend: true,
+      showlegend: false,
     });
   }
   if (params.group_centers.group.length >= 1) {
