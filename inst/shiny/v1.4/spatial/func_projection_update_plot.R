@@ -46,14 +46,14 @@ spatial_projection_update_plot <- function(input) {
     }
     ## send request to update projection to JavaScript functions (2D / 3D)
     if ( plot_parameters[['n_dimensions']] == 2 ) {
-      shinyjs::js$updatePlot2DContinuous(
+      shinyjs::js$updatePlot2DContinuousSpatial(
         output_meta,
         output_data,
         output_hover
       )
     } else if ( plot_parameters[['n_dimensions']] == 3 ) {
       output_data[['z']] <- coordinates[[3]]
-      shinyjs::js$updatePlot3DContinuous(
+      shinyjs::js$updatePlot3DContinuousSpatial(
         output_meta,
         output_data,
         output_hover
@@ -116,7 +116,7 @@ spatial_projection_update_plot <- function(input) {
         x = group_centers_df[['x_median']],
         y = group_centers_df[['y_median']]
       )
-      shinyjs::js$updatePlot2DCategorical(
+      shinyjs::js$updatePlot2DCategoricalSpatial(
         output_meta,
         output_data,
         output_hover,
@@ -147,7 +147,7 @@ spatial_projection_update_plot <- function(input) {
         y = group_centers_df[['y_median']],
         z = group_centers_df[['z_median']]
       )
-      shinyjs::js$updatePlot3DCategorical(
+      shinyjs::js$updatePlot3DCategoricalSpatial(
         output_meta,
         output_data,
         output_hover,

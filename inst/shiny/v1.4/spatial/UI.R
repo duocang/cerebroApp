@@ -20,10 +20,10 @@ tab_spatial <- tabItem(
   shinyjs::extendShinyjs(
     text = js_code_spatial_projection,
     functions = c(
-      "updatePlot2DContinuous",
-      "updatePlot3DContinuous",
-      "updatePlot2DCategorical",
-      "updatePlot3DCategorical"
+      "updatePlot2DContinuousSpatial",
+      "updatePlot3DContinuousSpatial",
+      "updatePlot2DCategoricalSpatial",
+      "updatePlot3DCategoricalSpatial"
     )
   ),
   uiOutput("spatial_projection_UI"),

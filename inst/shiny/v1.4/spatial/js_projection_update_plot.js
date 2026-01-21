@@ -110,7 +110,7 @@ const spatial_projection_default_params = {
 }
 
 // update 2D projection with continuous coloring
-shinyjs.updatePlot2DContinuous = function(params) {
+shinyjs.updatePlot2DContinuousSpatial = function(params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   const data = [];
   data.push(
@@ -151,7 +151,7 @@ shinyjs.updatePlot2DContinuous = function(params) {
 }
 
 // update 3D projection with continuous coloring
-shinyjs.updatePlot3DContinuous = function(params) {
+shinyjs.updatePlot3DContinuousSpatial = function(params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   const data = [];
   data.push(
@@ -183,7 +183,7 @@ shinyjs.updatePlot3DContinuous = function(params) {
 }
 
 // update 2D projection with categorical coloring
-shinyjs.updatePlot2DCategorical = function(params) {
+shinyjs.updatePlot2DCategoricalSpatial = function(params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   const data = [];
   for (let i = 0; i < params.data.x.length; i++) {
@@ -242,7 +242,7 @@ shinyjs.updatePlot2DCategorical = function(params) {
 }
 
 // update 3D projection with categorical coloring
-shinyjs.updatePlot3DCategorical = function(params) {
+shinyjs.updatePlot3DCategoricalSpatial = function(params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   const data = [];
   for (let i = 0; i < params.data.x.length; i++) {
