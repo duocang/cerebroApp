@@ -67,6 +67,23 @@ const spatial_projection_layout_2D = {
      #spatial_projection.is-rotated .infolayer .g-ytitle {
        display: none !important;
      }
+     #spatial_projection.is-rotated .cartesianlayer .plot path,
+     #spatial_projection.is-rotated .cartesianlayer .plot rect {
+       stroke: none !important;
+       fill: none !important;
+     }
+     #spatial_projection.is-rotated .cartesianlayer .plot {
+       border: none !important;
+     }
+     #spatial_projection.is-rotated .cartesianlayer path,
+     #spatial_projection.is-rotated .cartesianlayer rect {
+       stroke: none !important;
+       fill: none !important;
+     }
+     #spatial_projection.is-rotated .cartesianlayer .xaxislayer-below path,
+     #spatial_projection.is-rotated .cartesianlayer .yaxislayer-below path {
+       stroke: none !important;
+     }
 
      /* Custom Legend Styles */
      #spatial_projection_legend {
@@ -112,9 +129,37 @@ const spatial_projection_layout_2D = {
      .legend-item-hidden .legend-color-box {
        opacity: 0.5;
      }
+     .detached-modebar {
+       position: absolute !important;
+       top: 0px !important;
+       right: 0px !important;
+       z-index: 1001 !important;
+     }
    `;
   document.head.appendChild(style);
 })();
+
+shinyjs.detachModebar = function () {
+  const plotContainer = document.getElementById('spatial_projection');
+  if (!plotContainer) return;
+
+  const parent = plotContainer.parentElement;
+  if (getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  // Find the modebar inside the plot container
+  const modebar = plotContainer.querySelector('.modebar-container') || plotContainer.querySelector('.modebar');
+
+  if (modebar) {
+    // Remove stale detached modebars
+    const staleModebars = parent.querySelectorAll('.detached-modebar');
+    staleModebars.forEach((el) => el.remove());
+
+    parent.appendChild(modebar);
+    modebar.classList.add('detached-modebar');
+  }
+};
 
 // Custom Legend Helper Functions
 shinyjs.makeDraggable = function (el) {
@@ -353,6 +398,8 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       colorscale: 'YlGnBu',
       reversescale: true,
       colorbar: {
+        len: 0,
+        thickness: 0,
         title: {
           text: params.meta.color_variable,
         },
@@ -382,7 +429,7 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
-  Plotly.react('spatial_projection', data, layout_here);
+  Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
 };
 
 // update 3D projection with continuous coloring
@@ -404,6 +451,8 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
       colorscale: 'YlGnBu',
       reversescale: true,
       colorbar: {
+        len: 0,
+        thickness: 0,
         title: {
           text: params.meta.color_variable,
         },
@@ -424,7 +473,7 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
-  Plotly.react('spatial_projection', data, layout_here);
+  Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
 };
 
 shinyjs.rotateSpatialProjection = function (angle) {
@@ -448,6 +497,7 @@ shinyjs.rotateSpatialProjection = function (angle) {
     plotContainer.style.transition = 'transform 0.3s ease';
     plotContainer.style.transformOrigin = 'center center';
   }
+  shinyjs.detachModebar();
 };
 
 shinyjs.getContainerDimensions = function () {
@@ -503,6 +553,7 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
       },
       hoverinfo: 'skip',
       inherit: false,
+      showlegend: false,
     });
   }
   const layout_here = Object.assign(spatial_projection_layout_2D);
@@ -525,7 +576,7 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
-  Plotly.react('spatial_projection', data, layout_here);
+  Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
 };
 
 // update 3D projection with categorical coloring
@@ -571,6 +622,7 @@ shinyjs.updatePlot3DCategoricalSpatial = function (params) {
       },
       hoverinfo: 'skip',
       inherit: false,
+      showlegend: false,
     });
   }
   const layout_here = Object.assign(spatial_projection_layout_3D);
@@ -584,5 +636,5 @@ shinyjs.updatePlot3DCategoricalSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
-  Plotly.react('spatial_projection', data, layout_here);
+  Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
 };
