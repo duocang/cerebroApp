@@ -34,6 +34,27 @@ const spatial_projection_layout_2D = {
   },
 };
 
+// Inject CSS for counter-rotation of text elements
+(function () {
+  const style = document.createElement('style');
+  style.innerHTML = `
+    #spatial_projection {
+      --spatial-rotation: 0deg;
+    }
+    #spatial_projection .textpoint text {
+      transform: rotate(var(--spatial-rotation));
+      transform-box: fill-box;
+      transform-origin: center center;
+    }
+    #spatial_projection .hoverlayer .hovertext {
+      transform: rotate(var(--spatial-rotation));
+      transform-box: fill-box;
+      transform-origin: center center;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
 // layout for 3D projections
 const spatial_projection_layout_3D = {
   uirevision: 'true',
@@ -224,6 +245,9 @@ shinyjs.rotateSpatialProjection = function (angle) {
     const scaleY = containerHeight / rotatedHeight;
     const scale = Math.min(scaleX, scaleY, 1);
 
+    // Set CSS variable for text counter-rotation
+    plotContainer.style.setProperty('--spatial-rotation', -angle + 'deg');
+
     plotContainer.style.transform = `rotate(${angle}deg) scale(${scale})`;
     plotContainer.style.transition = 'transform 0.3s ease';
     plotContainer.style.transformOrigin = 'center center';
@@ -272,7 +296,7 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
       x: params.group_centers.x,
       y: params.group_centers.y,
       text: params.group_centers.group,
-      type: 'scattergl',
+      type: 'scatter',
       mode: 'text',
       name: 'Labels',
       textposition: 'middle center',
