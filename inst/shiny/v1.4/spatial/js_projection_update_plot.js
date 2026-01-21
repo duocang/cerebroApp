@@ -51,6 +51,23 @@ const spatial_projection_layout_2D = {
        transform-box: fill-box;
        transform-origin: center center;
      }
+
+     /* Rotated State Styles */
+     #spatial_projection.is-rotated .main-svg {
+       background: rgba(0,0,0,0) !important;
+     }
+     #spatial_projection.is-rotated .bg {
+       fill-opacity: 0 !important;
+     }
+     #spatial_projection.is-rotated .cartesianlayer .xaxislayer-above,
+     #spatial_projection.is-rotated .cartesianlayer .yaxislayer-above,
+     #spatial_projection.is-rotated .cartesianlayer .gridlayer,
+     #spatial_projection.is-rotated .cartesianlayer .zerolinelayer,
+     #spatial_projection.is-rotated .infolayer .g-xtitle,
+     #spatial_projection.is-rotated .infolayer .g-ytitle {
+       display: none !important;
+     }
+
      /* Custom Legend Styles */
      #spatial_projection_legend {
         position: absolute;
@@ -414,27 +431,20 @@ shinyjs.rotateSpatialProjection = function (angle) {
   const plotContainer = document.getElementById('spatial_projection');
   if (plotContainer) {
     const parentContainer = plotContainer.parentElement;
-    const angleRad = (angle * Math.PI) / 180;
-    const absCos = Math.abs(Math.cos(angleRad));
-    const absSin = Math.abs(Math.sin(angleRad));
+    const isRotated = angle % 360 !== 0;
 
-    const containerWidth = parentContainer.clientWidth;
-    const containerHeight = parentContainer.clientHeight;
-
-    const originalWidth = plotContainer.offsetWidth;
-    const originalHeight = plotContainer.offsetHeight;
-
-    const rotatedWidth = originalWidth * absCos + originalHeight * absSin;
-    const rotatedHeight = originalWidth * absSin + originalHeight * absCos;
-
-    const scaleX = containerWidth / rotatedWidth;
-    const scaleY = containerHeight / rotatedHeight;
-    const scale = Math.min(scaleX, scaleY, 1);
+    if (isRotated) {
+      plotContainer.classList.add('is-rotated');
+      parentContainer.style.overflow = 'visible';
+    } else {
+      plotContainer.classList.remove('is-rotated');
+      parentContainer.style.overflow = ''; // Revert to default
+    }
 
     // Set CSS variable for text counter-rotation
     plotContainer.style.setProperty('--spatial-rotation', -angle + 'deg');
 
-    plotContainer.style.transform = `rotate(${angle}deg) scale(${scale})`;
+    plotContainer.style.transform = `rotate(${angle}deg)`;
     plotContainer.style.transition = 'transform 0.3s ease';
     plotContainer.style.transformOrigin = 'center center';
   }
