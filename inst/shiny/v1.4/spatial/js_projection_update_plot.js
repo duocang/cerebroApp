@@ -107,6 +107,10 @@ const spatial_projection_default_params = {
     y: [],
     z: [],
   },
+  container: {
+    width: null,
+    height: null,
+  },
 };
 
 // update 2D projection with continuous coloring
@@ -145,6 +149,16 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
     layout_here.yaxis['autorange'] = false;
     layout_here.yaxis['range'] = params.data.y_range;
   }
+  if (params.container && params.container.width && params.container.height) {
+    layout_here.width = params.container.width;
+    layout_here.height = params.container.height;
+  } else {
+    const plotContainer = document.getElementById('spatial_projection');
+    if (plotContainer && plotContainer.parentElement) {
+      layout_here.width = plotContainer.parentElement.clientWidth;
+      layout_here.height = plotContainer.parentElement.clientHeight;
+    }
+  }
   Plotly.react('spatial_projection', data, layout_here);
 };
 
@@ -175,7 +189,18 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
     text: params.hover.text,
     showlegend: false,
   });
-  Plotly.react('spatial_projection', data, spatial_projection_layout_3D);
+  const layout_here = Object.assign(spatial_projection_layout_3D);
+  if (params.container && params.container.width && params.container.height) {
+    layout_here.width = params.container.width;
+    layout_here.height = params.container.height;
+  } else {
+    const plotContainer = document.getElementById('spatial_projection');
+    if (plotContainer && plotContainer.parentElement) {
+      layout_here.width = plotContainer.parentElement.clientWidth;
+      layout_here.height = plotContainer.parentElement.clientHeight;
+    }
+  }
+  Plotly.react('spatial_projection', data, layout_here);
 };
 
 shinyjs.rotateSpatialProjection = function (angle) {
@@ -203,6 +228,18 @@ shinyjs.rotateSpatialProjection = function (angle) {
     plotContainer.style.transition = 'transform 0.3s ease';
     plotContainer.style.transformOrigin = 'center center';
   }
+};
+
+shinyjs.getContainerDimensions = function () {
+  const plotContainer = document.getElementById('spatial_projection');
+  if (plotContainer) {
+    const parentContainer = plotContainer.parentElement;
+    return {
+      width: parentContainer.clientWidth,
+      height: parentContainer.clientHeight,
+    };
+  }
+  return { width: 0, height: 0 };
 };
 
 // update 2D projection with categorical coloring
@@ -257,6 +294,16 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
     layout_here.yaxis['autorange'] = false;
     layout_here.yaxis['range'] = params.data.y_range;
   }
+  if (params.container && params.container.width && params.container.height) {
+    layout_here.width = params.container.width;
+    layout_here.height = params.container.height;
+  } else {
+    const plotContainer = document.getElementById('spatial_projection');
+    if (plotContainer && plotContainer.parentElement) {
+      layout_here.width = plotContainer.parentElement.clientWidth;
+      layout_here.height = plotContainer.parentElement.clientHeight;
+    }
+  }
   Plotly.react('spatial_projection', data, layout_here);
 };
 
@@ -304,5 +351,16 @@ shinyjs.updatePlot3DCategoricalSpatial = function (params) {
       inherit: false,
     });
   }
-  Plotly.react('spatial_projection', data, spatial_projection_layout_3D);
+  const layout_here = Object.assign(spatial_projection_layout_3D);
+  if (params.container && params.container.width && params.container.height) {
+    layout_here.width = params.container.width;
+    layout_here.height = params.container.height;
+  } else {
+    const plotContainer = document.getElementById('spatial_projection');
+    if (plotContainer && plotContainer.parentElement) {
+      layout_here.width = plotContainer.parentElement.clientWidth;
+      layout_here.height = plotContainer.parentElement.clientHeight;
+    }
+  }
+  Plotly.react('spatial_projection', data, layout_here);
 };

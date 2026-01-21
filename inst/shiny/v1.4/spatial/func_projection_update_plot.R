@@ -10,6 +10,13 @@ spatial_projection_update_plot <- function(input) {
   color_assignments <- input[['color_assignments']]
   hover_info <- input[['hover_info']]
   color_input <- cells_df[[ plot_parameters[['color_variable']] ]]
+
+  ## get container dimensions
+  container_dimensions <- shinyjs::js$getContainerDimensions()
+  container_info <- list(
+    width = container_dimensions[['width']],
+    height = container_dimensions[['height']]
+  )
   ## follow this when the coloring variable is numeric
   if ( is.numeric(color_input) ) {
     ## put together meta data
@@ -49,14 +56,18 @@ spatial_projection_update_plot <- function(input) {
       shinyjs::js$updatePlot2DContinuousSpatial(
         output_meta,
         output_data,
-        output_hover
+        output_hover,
+        list(),
+        container_info
       )
     } else if ( plot_parameters[['n_dimensions']] == 3 ) {
       output_data[['z']] <- coordinates[[3]]
       shinyjs::js$updatePlot3DContinuousSpatial(
         output_meta,
         output_data,
-        output_hover
+        output_hover,
+        list(),
+        container_info
       )
     }
   ## follow this procedure when coloring variable is not numeric
@@ -120,7 +131,8 @@ spatial_projection_update_plot <- function(input) {
         output_meta,
         output_data,
         output_hover,
-        output_group_centers
+        output_group_centers,
+        container_info
       )
     } else if ( plot_parameters[['n_dimensions']] == 3 ) {
       i <- 1
@@ -151,7 +163,8 @@ spatial_projection_update_plot <- function(input) {
         output_meta,
         output_data,
         output_hover,
-        output_group_centers
+        output_group_centers,
+        container_info
       )
     }
   }
