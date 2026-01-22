@@ -18,6 +18,16 @@ const spatial_projection_layout_2D = {
     showline: true,
     zeroline: false,
     range: [],
+    gridcolor: '#E2E8F0',
+    linecolor: '#CBD5E0',
+    tickfont: {
+      color: '#718096',
+      family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    },
+    titlefont: {
+      color: '#2D3748',
+      family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    },
   },
   yaxis: {
     autorange: true,
@@ -25,13 +35,29 @@ const spatial_projection_layout_2D = {
     showline: true,
     zeroline: false,
     range: [],
+    gridcolor: '#E2E8F0',
+    linecolor: '#CBD5E0',
+    tickfont: {
+      color: '#718096',
+      family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    },
+    titlefont: {
+      color: '#2D3748',
+      family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    },
   },
   hoverlabel: {
     font: {
-      size: 11,
+      size: 12,
+      color: '#2D3748',
+      family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     },
+    bgcolor: 'rgba(255, 255, 255, 0.95)',
+    bordercolor: '#E2E8F0',
     align: 'left',
   },
+  plot_bgcolor: 'rgba(255, 255, 255, 0)',
+  paper_bgcolor: 'rgba(255, 255, 255, 0)',
 };
 
 // Inject CSS for counter-rotation of text elements
@@ -90,50 +116,77 @@ const spatial_projection_layout_2D = {
         position: absolute;
         top: 10px;
         right: 10px;
-        background: rgba(255, 255, 255, 0.9);
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        padding: 8px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 12px;
         max-height: 300px;
         overflow-y: auto;
         z-index: 1000;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        font-family: "Open Sans", verdana, arial, sans-serif;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         cursor: move;
       }
       .custom-legend-item {
        display: flex;
        align-items: center;
-       margin-bottom: 4px;
+       margin-bottom: 6px;
        cursor: pointer;
        user-select: none;
+       padding: 4px 6px;
+       border-radius: 4px;
+       transition: background-color 0.2s ease;
+     }
+     .custom-legend-item:hover {
+       background-color: rgba(91, 124, 153, 0.08);
      }
      .custom-legend-item:last-child {
        margin-bottom: 0;
      }
      .legend-color-box {
-       width: 14px;
-       height: 14px;
-       margin-right: 8px;
-       border-radius: 3px;
+       width: 16px;
+       height: 16px;
+       margin-right: 10px;
+       border-radius: 4px;
        flex-shrink: 0;
+       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
      }
      .legend-text {
-       font-size: 12px;
-       color: #2a3f5f;
+       font-size: 13px;
+       color: #2D3748;
+       font-weight: 500;
      }
      .legend-item-hidden .legend-text {
        text-decoration: line-through;
-       color: #aaa;
+       color: #A0AEC0;
      }
      .legend-item-hidden .legend-color-box {
-       opacity: 0.5;
+       opacity: 0.4;
      }
      .detached-modebar {
        position: absolute !important;
        top: 0px !important;
        right: 0px !important;
        z-index: 1001 !important;
+     }
+     .detached-modebar .modebar-btn {
+       background: rgba(255, 255, 255, 0.95);
+       border: 1px solid #E2E8F0;
+       border-radius: 4px;
+       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+       transition: all 0.2s ease;
+     }
+     .detached-modebar .modebar-btn:hover {
+       background: rgba(91, 124, 153, 0.1);
+       border-color: #5B7C99;
+       transform: translateY(-1px);
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+     }
+     .detached-modebar .modebar-btn svg {
+       fill: #5B7C99;
+     }
+     .detached-modebar .modebar-btn:hover svg {
+       fill: #3D5A73;
      }
    `;
   document.head.appendChild(style);
@@ -322,6 +375,16 @@ const spatial_projection_layout_3D = {
       showline: true,
       zeroline: false,
       range: [],
+      gridcolor: '#E2E8F0',
+      linecolor: '#CBD5E0',
+      tickfont: {
+        color: '#718096',
+        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
+      titlefont: {
+        color: '#2D3748',
+        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
     },
     yaxis: {
       autorange: true,
@@ -329,20 +392,46 @@ const spatial_projection_layout_3D = {
       showline: true,
       zeroline: false,
       range: [],
+      gridcolor: '#E2E8F0',
+      linecolor: '#CBD5E0',
+      tickfont: {
+        color: '#718096',
+        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
+      titlefont: {
+        color: '#2D3748',
+        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
     },
     zaxis: {
       autorange: true,
       mirror: true,
       showline: true,
       zeroline: false,
+      gridcolor: '#E2E8F0',
+      linecolor: '#CBD5E0',
+      tickfont: {
+        color: '#718096',
+        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
+      titlefont: {
+        color: '#2D3748',
+        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
     },
   },
   hoverlabel: {
     font: {
-      size: 11,
+      size: 12,
+      color: '#2D3748',
+      family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     },
+    bgcolor: 'rgba(255, 255, 255, 0.95)',
+    bordercolor: '#E2E8F0',
     align: 'left',
   },
+  plot_bgcolor: 'rgba(255, 255, 255, 0)',
+  paper_bgcolor: 'rgba(255, 255, 255, 0)',
 };
 
 // structure of input data
@@ -395,13 +484,24 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       opacity: params.data.point_opacity,
       line: params.data.point_line,
       color: params.data.color,
-      colorscale: 'YlGnBu',
+      colorscale: [
+        [0, '#E8F4F8'],
+        [0.2, '#D1E8ED'],
+        [0.4, '#A8D0DC'],
+        [0.6, '#7FB8CB'],
+        [0.8, '#5B9FB8'],
+        [1, '#3D7A9E'],
+      ],
       reversescale: true,
       colorbar: {
         len: 0,
         thickness: 0,
         title: {
           text: params.meta.color_variable,
+          font: {
+            color: '#2D3748',
+            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          },
         },
       },
     },
@@ -448,13 +548,24 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
       opacity: params.data.point_opacity,
       line: params.data.point_line,
       color: params.data.color,
-      colorscale: 'YlGnBu',
+      colorscale: [
+        [0, '#E8F4F8'],
+        [0.2, '#D1E8ED'],
+        [0.4, '#A8D0DC'],
+        [0.6, '#7FB8CB'],
+        [0.8, '#5B9FB8'],
+        [1, '#3D7A9E'],
+      ],
       reversescale: true,
       colorbar: {
         len: 0,
         thickness: 0,
         title: {
           text: params.meta.color_variable,
+          font: {
+            color: '#2D3748',
+            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          },
         },
       },
     },
@@ -533,7 +644,13 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
       hoverinfo: params.hover.hoverinfo,
       text: params.hover.text[i],
       hoverlabel: {
-        bgcolor: params.data.color[i],
+        bgcolor: 'rgba(255, 255, 255, 0.95)',
+        bordercolor: '#E2E8F0',
+        font: {
+          color: '#2D3748',
+          size: 12,
+          family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        },
       },
       showlegend: false,
     });
@@ -601,7 +718,13 @@ shinyjs.updatePlot3DCategoricalSpatial = function (params) {
       hoverinfo: params.hover.hoverinfo,
       text: params.hover.text[i],
       hoverlabel: {
-        bgcolor: params.data.color[i],
+        bgcolor: 'rgba(255, 255, 255, 0.95)',
+        bordercolor: '#E2E8F0',
+        font: {
+          color: '#2D3748',
+          size: 12,
+          family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        },
       },
       showlegend: false,
     });

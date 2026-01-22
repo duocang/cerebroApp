@@ -113,6 +113,8 @@ ui <- dashboardPage(
   dashboardBody(
     shinyjs::useShinyjs(),
     tags$head(
+      # tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
+      includeCSS("www/custom.css"),
       tags$style(HTML("
         .github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}
         @keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}
@@ -120,6 +122,47 @@ ui <- dashboardPage(
         .github-corner svg{fill:#151513; color:#fff; position: fixed; top: 0; border: 0; right: 0; z-index: 9999;}
       "))
     ),
+    # 覆盖 AdminLTE 默认的 solid box 蓝色标题栏 - 放在 body 内确保在 AdminLTE 之后加载
+    tags$style(HTML("
+      .box.box-solid.box-primary {
+        border: 0px solid #5b7c99;
+      }
+      .box.box-solid.box-primary>.box-header {
+        background: linear-gradient(135deg, #5b7c99 0%, #3d5a73 100%);
+        background-color: #5b7c99;
+      }
+      .box.box-solid.box-success {
+        border: 1px solid #6b9080;
+      }
+      .box.box-solid.box-success>.box-header {
+        background: linear-gradient(135deg, #6b9080 0%, #5a7a6d 100%);
+        background-color: #6b9080;
+      }
+      .box.box-solid.box-warning {
+        border: 1px solid #e9c46a;
+      }
+      .box.box-solid.box-warning>.box-header {
+        background: linear-gradient(135deg, #e9c46a 0%, #d4a84a 100%);
+        background-color: #e9c46a;
+      }
+      .box.box-solid.box-danger {
+        border: 1px solid #e07a5f;
+      }
+      .box.box-solid.box-danger>.box-header {
+        background: linear-gradient(135deg, #e07a5f 0%, #c96a4f 100%);
+        background-color: #e07a5f;
+      }
+      .box.box-solid.box-info {
+        border: 1px solid #8b9dc3;
+      }
+      .box.box-solid.box-info>.box-header {
+        background: linear-gradient(135deg, #8b9dc3 0%, #7589b0 100%);
+        background-color: #8b9dc3;
+      }
+      .bg-light-blue, .label-primary, .modal-primary .modal-body {
+        background-color: #5b7c99 !important;
+      }
+    ")),
     # GitHub corner
     tags$div(
       class = "github-corner",
