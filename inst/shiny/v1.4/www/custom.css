@@ -287,6 +287,12 @@ a:hover {
   border-top: 3px solid var(--accent-color);
 }
 
+.box.box-solid.box-primary > .box-header {
+  color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  background-color: var(--primary-color);
+}
+
 .box-header {
   background: linear-gradient(to bottom, #fafbfc, #f5f6f7);
   border-bottom: 1px solid var(--border-color);

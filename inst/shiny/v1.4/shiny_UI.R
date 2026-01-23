@@ -114,7 +114,7 @@ ui <- dashboardPage(
     shinyjs::useShinyjs(),
     tags$head(
       # tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
-      includeCSS("www/custom.css"),
+      includeCSS(file.path(Cerebro.options[["cerebro_root"]], "shiny/v1.4/www/custom.css")),
       tags$style(HTML("
         .github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}
         @keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}

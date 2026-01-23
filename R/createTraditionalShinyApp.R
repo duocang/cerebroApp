@@ -167,6 +167,14 @@ formatRObject <- function(obj, indent = 0) {
 #' @param overwrite Logical. If TRUE, existing result_dir will be deleted before
 #'   creating new files. Default is TRUE.
 #' @param verbose Logical. If TRUE, prints detailed progress messages. Default is TRUE.
+#' @param enable_auth Logical. If TRUE, enables authentication using shinymanager.
+#'   Default is FALSE.
+#' @param admin_user Character. Admin username. Default is "admin".
+#' @param admin_pass Character. Admin password. Default is "admin#123".
+#' @param users Character vector. Additional usernames. Default is NULL.
+#' @param users_pass Character vector. Passwords for additional users. Default is NULL.
+#' @param auth_passphrase Character. Passphrase for encrypting credentials database.
+#'   Default is "123123".
 #'
 #' @return Invisibly returns the path to the result directory.
 #'
@@ -203,8 +211,8 @@ formatRObject <- function(obj, indent = 0) {
 #'
 #' @export
 createTraditionalShinyApp <- function(cerebro_data,
-                                      result_dir = "result/20_cerebro_shinyapp",
-                                      version = "v1.3",
+                                      result_dir = NULL,
+                                      version = "v1.4",
                                       max_request_size = 8000,
                                       port = 1337,
                                       host = "127.0.0.1",
@@ -214,7 +222,13 @@ createTraditionalShinyApp <- function(cerebro_data,
                                       colors = NULL,
                                       cerebro_options = list(exclude_trivial_metadata = TRUE),
                                       overwrite = TRUE,
-                                      verbose = TRUE) {
+                                      verbose = TRUE,
+                                      enable_auth = FALSE,
+                                      admin_user = "admin",
+                                      admin_pass = "admin#123",
+                                      users = NULL,
+                                      users_pass = NULL,
+                                      auth_passphrase = "123123") {
 
   # Validate input parameters ------------------------------------------------##
   if (!all(file.exists(cerebro_data))) {
@@ -280,6 +294,67 @@ createTraditionalShinyApp <- function(cerebro_data,
     stop("Failed to copy extdata files.", call. = FALSE)
   }
 
+  # Setup authentication (if enabled) ----------------------------------------##
+  auth_enabled <- FALSE
+  if (enable_auth) {
+    if (verbose) cat("Setting up authentication system...\n")
+
+    # Check if shinymanager is available
+    if (!requireNamespace("shinymanager", quietly = TRUE)) {
+      stop("Package 'shinymanager' is required for authentication but not installed.",
+           "Please install it with: install.packages('shinymanager')", call. = FALSE)
+    }
+
+    # Validate users and passwords
+    if (!is.null(users) && is.null(users_pass)) {
+      stop("'users_pass' must be provided when 'users' is specified.", call. = FALSE)
+    }
+    if (!is.null(users_pass) && is.null(users)) {
+      stop("'users' must be provided when 'users_pass' is specified.", call. = FALSE)
+    }
+    if (!is.null(users) && !is.null(users_pass) && length(users) != length(users_pass)) {
+      stop("'users' and 'users_pass' must have the same length.", call. = FALSE)
+    }
+
+    # Build users data frame
+    users_list <- list(
+      user = c(admin_user, users),
+      password = c(admin_pass, users_pass),
+      admin = c(TRUE, rep(FALSE, length(users)))
+    )
+    users_df <- do.call(data.frame, c(users_list, stringsAsFactors = FALSE))
+
+    # Set up credentials database path
+    sqlite_path <- file.path(result_dir, "credentials.sqlite")
+
+    # Remove existing database if it exists
+    if (file.exists(sqlite_path)) {
+      if (verbose) cat("  Removing existing credentials database...\n")
+      file.remove(sqlite_path)
+    }
+
+    # Create credentials database
+    tryCatch({
+      shinymanager::create_db(
+        credentials_data = users_df,
+        sqlite_path = sqlite_path,
+        passphrase = auth_passphrase
+      )
+      auth_enabled <- TRUE
+      if (verbose) {
+        info <- file.info(sqlite_path)
+        cat("  Created credentials database:", normalizePath(sqlite_path), "\n")
+        cat("  Database size:", info$size, "bytes\n")
+        cat("  Admin user:", admin_user, "\n")
+        if (!is.null(users)) {
+          cat("  Additional users:", paste(users, collapse = ", "), "\n")
+        }
+      }
+    }, error = function(e) {
+      stop("Failed to create credentials database: ", conditionMessage(e), call. = FALSE)
+    })
+  }
+
   # Create app.R file ---------------------------------------------------------##
   if (verbose) cat("Generating app.R file...\n")
 
@@ -325,6 +400,42 @@ createTraditionalShinyApp <- function(cerebro_data,
   # Add colors to cerebro_options if provided
   colors_option <- if (!is.null(colors)) ',\n  "colors" = colors' else ''
 
+  # Generate authentication code if enabled
+  auth_code <- ""
+  auth_wrapper_code <- ""
+  app_ui_code <- "ui"
+  app_server_code <- "server"
+
+  if (auth_enabled) {
+    auth_code <- glue::glue('
+# Authentication setup
+library(shinymanager)
+
+credentials_path <- file.path(cerebro_root, "credentials.sqlite")
+auth_passphrase <- "{auth_passphrase}"
+
+# Check if credentials database exists
+if (!file.exists(credentials_path)) {{
+  stop("Credentials database not found: ", credentials_path)
+}}
+
+# Initialize credentials check
+check_credentials <- shinymanager::check_credentials(
+  credentials_path,
+  passphrase = auth_passphrase
+)
+')
+    auth_wrapper_code <- glue::glue('
+# Wrap UI with secure_app
+secure_ui <- shinymanager::secure_app(ui)
+')
+    app_ui_code <- "secure_ui"
+    app_server_code <- 'function(input, output, session) {
+  res_auth <- shinymanager::secure_server(check_credentials = check_credentials)
+  server(input, output, session)
+}'
+  }
+
   # Generate app.R content
   app_content <- glue::glue('
 #==============================================================================
@@ -359,16 +470,19 @@ shiny_options <- list(
   display.mode = "{display_mode}"
 )
 
+{auth_code}
 ## 加载服务器和界面函数
 source(file.path(cerebro_root, "shiny/{version}/shiny_UI.R"))
 source(file.path(cerebro_root, "shiny/{version}/shiny_server.R"))
 
-## 启动应用
+## Start Shiny App
+{auth_wrapper_code}
 shiny::shinyApp(
-  ui = ui,
-  server = server,
+  ui = {app_ui_code},
+  server = {app_server_code},
   options = shiny_options
-)',
+)
+',
     .trim = FALSE
   )
 
@@ -395,6 +509,15 @@ shiny::shinyApp(
     cat("Port:", port, "\n")
     cat("Host:", host, "\n")
     cat("Launch browser:", launch_browser, "\n")
+    if (auth_enabled) {
+      cat("Authentication: ENABLED\n")
+      cat("  Admin user:", admin_user, "\n")
+      if (!is.null(users)) {
+        cat("  Additional users:", paste(users, collapse = ", "), "\n")
+      }
+    } else {
+      cat("Authentication: DISABLED\n")
+    }
     cat("\nTo launch the app, run:\n")
     cat("  setwd('", result_dir, "')\n", sep = "")
     cat("  shiny::runApp('app.R')\n")
