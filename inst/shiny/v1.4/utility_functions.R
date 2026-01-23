@@ -958,12 +958,20 @@ getTrajectory <- function(method, name) {
 }
 getBCR <- function() {
   if ( 'Cerebro_v1.3' %in% class(data_set()) ) {
-    return(data_set()$getBCR())
+    if ( is.function(data_set()$getBCR) ) {
+      return(data_set()$getBCR())
+    } else {
+      return(data_set()$bcr_data)
+    }
   }
 }
 getTCR <- function() {
   if ( 'Cerebro_v1.3' %in% class(data_set()) ) {
-    return(data_set()$getTCR())
+    if ( is.function(data_set()$getTCR) ) {
+      return(data_set()$getTCR())
+    } else {
+      return(data_set()$tcr_data)
+    }
   }
 }
 .has_scRepertoire <- function() {

@@ -212,8 +212,143 @@ server <- function(input, output, session) {
   })
 
   ##--------------------------------------------------------------------------##
-  ## Show "Trajectory" tab if there are trajectories in the data set.
+  ## Show "Spatial" tab if there are spatial projections in the data set.
+  ##--------------------------------------------------------------------------
+
+  output[["sidebar_item_spatial"]] <- renderMenu({
+    req(!is.null(data_set()))
+    menuItem("Spatial", tabName = "spatial", icon = icon("images"))
+  })
+
+  show_spatial_tab <- reactive({
+    req(!is.null(data_set()))
+    spatial_projections <- grep("^Spatial_", availableProjections(), value = TRUE)
+    if (length(spatial_projections) > 0) {
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  })
+
+  observe({
+    shinyjs::toggleElement(
+      id = "sidebar_item_spatial",
+      condition = show_spatial_tab()
+    )
+  })
+
   ##--------------------------------------------------------------------------##
+  ## Show "Marker genes" tab if there are marker genes in the data set.
+  ##--------------------------------------------------------------------------
+
+  output[["sidebar_item_marker_genes"]] <- renderMenu({
+    req(!is.null(data_set()))
+    menuItem("Marker genes", tabName = "markerGenes", icon = icon("list-alt"))
+  })
+
+  show_marker_genes_tab <- reactive({
+    req(!is.null(data_set()))
+    print(getMethodsForMarkerGenes())
+    if (
+      !is.null(getMethodsForMarkerGenes()) &&
+      length(getMethodsForMarkerGenes()) > 0
+    ) {
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  })
+
+  observe({
+    shinyjs::toggleElement(
+      id = "sidebar_item_marker_genes",
+      condition = show_marker_genes_tab()
+    )
+  })
+
+  ##--------------------------------------------------------------------------##
+  ## Show "BCR" tab if there is BCR data in the data set.
+  ##--------------------------------------------------------------------------
+
+  output[["sidebar_item_bcr"]] <- renderMenu({
+    req(!is.null(data_set()))
+    menuItem("BCR", tabName = "bcr", icon = icon("dna"))
+  })
+
+  show_bcr_tab <- reactive({
+    req(!is.null(data_set()))
+    bcr_data <- getBCR()
+    if (!is.null(bcr_data) && is.list(bcr_data) && length(bcr_data) > 0) {
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  })
+
+  observe({
+    shinyjs::toggleElement(
+      id = "sidebar_item_bcr",
+      condition = show_bcr_tab()
+    )
+  })
+
+  ##--------------------------------------------------------------------------##
+  ## Show "TCR" tab if there is TCR data in the data set.
+  ##--------------------------------------------------------------------------
+
+  output[["sidebar_item_tcr"]] <- renderMenu({
+    req(!is.null(data_set()))
+    menuItem("TCR", tabName = "tcr", icon = icon("dna"))
+  })
+
+  show_tcr_tab <- reactive({
+    req(!is.null(data_set()))
+    tcr_data <- getTCR()
+    if (!is.null(tcr_data) && is.list(tcr_data) && length(tcr_data) > 0) {
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  })
+
+  observe({
+    shinyjs::toggleElement(
+      id = "sidebar_item_tcr",
+      condition = show_tcr_tab()
+    )
+  })
+
+  ##--------------------------------------------------------------------------##
+  ## Show "Enriched pathways" tab if there are enriched pathways in the data set.
+  ##--------------------------------------------------------------------------
+
+  output[["sidebar_item_enriched_pathways"]] <- renderMenu({
+    req(!is.null(data_set()))
+    menuItem("Enriched pathways", tabName = "enrichedPathways", icon = icon("sitemap"))
+  })
+
+  show_enriched_pathways_tab <- reactive({
+    req(!is.null(data_set()))
+    if (
+      !is.null(getMethodsForEnrichedPathways()) &&
+      length(getMethodsForEnrichedPathways()) > 0
+    ) {
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  })
+
+  observe({
+    shinyjs::toggleElement(
+      id = "sidebar_item_enriched_pathways",
+      condition = show_enriched_pathways_tab()
+    )
+  })
+
+  ##--------------------------------------------------------------------------##
+  ## Show "Trajectory" tab if there are trajectories in the data set.
+  ##--------------------------------------------------------------------------
 
   ## the tab item needs to be in the `output`
   output[["sidebar_item_trajectory"]] <- renderMenu({
@@ -303,8 +438,6 @@ server <- function(input, output, session) {
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/enriched_pathways/server.R"), local = TRUE)
   ## Immune Repertoire tabs (BCR/TCR)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/immune_repertoire/server.R"), local = TRUE)
-  createImmuneRepertoireServer("bcr")
-  createImmuneRepertoireServer("tcr")
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/trajectory/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/extra_material/server.R"), local = TRUE)
   source(paste0(Cerebro.options[["cerebro_root"]], "/shiny/v1.4/analysis_info/server.R"), local = TRUE)

@@ -692,3 +692,6 @@ createImmuneRepertoireServer <- function(repertoire_type = c("bcr", "tcr")) {
     }, plot_name = "percentKmer")
   })
 }
+
+createImmuneRepertoireServer("bcr")
+createImmuneRepertoireServer("tcr")

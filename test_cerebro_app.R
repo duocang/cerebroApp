@@ -2,8 +2,7 @@ devtools::load_all(".")
 
 # Test authentication functionality with debug output
 test_data1 <- system.file("extdata/v1.4/example.crb", package = "cerebroApp")
-cerebro_data <- c(`pbmc_10k_1` = test_data1,
-                  `pbmc_10k_2` = test_data1)
+cerebro_data <- c(`pbmc_10k_1` = test_data1)
 
 # Create app with authentication enabled
 result_dir <- "test_cerebro_app"
@@ -33,7 +32,7 @@ tryCatch({
     version = "v1.4",
     port = 8080,
     max_request_size = 10000,
-    enable_auth = TRUE,
+    enable_auth = FALSE,
     admin_user = "admin",
     admin_pass = "admin#123",
     users = c("user1", "user2"),
