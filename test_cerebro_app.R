@@ -1,7 +1,9 @@
 devtools::load_all(".")
 
 # Test authentication functionality with debug output
-test_data <- system.file("extdata/v1.4/example.crb", package = "cerebroApp")
+test_data1 <- system.file("extdata/v1.4/example.crb", package = "cerebroApp")
+cerebro_data <- c(`pbmc_10k_1` = test_data1,
+                  `pbmc_10k_2` = test_data1)
 
 # Create app with authentication enabled
 result_dir <- "test_cerebro_app"
@@ -9,12 +11,28 @@ result_dir <- "test_cerebro_app"
 message("Removing existing test_cerebro_app directory...\n")
 unlink(result_dir, recursive = TRUE)
 
+colors <-  list(
+  `pbmc_10k_1` = list(
+    `sample` = c(Ctrl = "black", MS = "#3d70b5", "Sample3" = "#ee756d"),
+    `seurat_clusters` = c(
+      "0" = "#66c69b",
+      "1" = "#ee756d",
+      "2" = "#d49005",
+      "3" = "#7caee5",
+      "4" = "#87be4d",
+      "5" = "#3cac57")
+  )
+)
+
 message("Creating Cerebro app...\n")
 tryCatch({
   createTraditionalShinyApp(
-    cerebro_data = test_data,
+    cerebro_data = cerebro_data,
     result_dir = result_dir,
+    colors = colors,
     version = "v1.4",
+    port = 8080,
+    max_request_size = 10000,
     enable_auth = TRUE,
     admin_user = "admin",
     admin_pass = "admin#123",

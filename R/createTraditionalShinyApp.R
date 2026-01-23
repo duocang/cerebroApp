@@ -240,6 +240,23 @@ createTraditionalShinyApp <- function(cerebro_data,
     warning("Some input files do not have .crb extension. Make sure they are valid Cerebro files.")
   }
 
+  # Enforce named list/vector for cerebro_data
+  if (is.null(names(cerebro_data)) || any(names(cerebro_data) == "")) {
+    stop("cerebro_data must be a named list or vector, and every element must have a name.", call. = FALSE)
+  }
+
+  # Validate colors if provided
+  if (!is.null(colors)) {
+    if (is.null(names(colors)) || any(names(colors) == "")) {
+      stop("colors must be a named list or vector.", call. = FALSE)
+    }
+
+    if (length(intersect(names(colors), names(cerebro_data))) == 0) {
+      warning("Colors and cerebro_data do not match, random colors will be used.", call. = FALSE)
+      colors <- NULL
+    }
+  }
+
   # Check if cerebroApp package is available
   if (!requireNamespace("cerebroApp", quietly = TRUE)) {
     stop("Package 'cerebroApp' is required but not installed.", call. = FALSE)
@@ -366,21 +383,12 @@ createTraditionalShinyApp <- function(cerebro_data,
   }
 
   # Generate crb_file_to_load configuration
-  if (length(cerebro_data) == 1 && is.null(names(cerebro_data))) {
-    # Single unnamed file
-    crb_files_code <- paste0('cerebro_data <- file.path(cerebro_root, "data", "', basename(cerebro_data), '")')
-    crb_load_code <- "cerebro_data"
-  } else {
-    # Multiple files or named vector
-    if (is.null(names(cerebro_data))) {
-      names(cerebro_data) <- paste0("Dataset ", seq_along(cerebro_data))
-    }
-    file_vector <- sapply(seq_along(cerebro_data), function(i) {
-      sprintf('`%s` = "data/%s"', names(cerebro_data)[i], basename(cerebro_data[i]))
-    })
-    crb_load_code <- paste0("c(", paste(file_vector, collapse = ",\n                          "), ")")
-    crb_files_code <- ""
-  }
+  # Multiple files or named vector (names are enforced now)
+  file_vector <- sapply(seq_along(cerebro_data), function(i) {
+    sprintf('`%s` = "data/%s"', names(cerebro_data)[i], basename(cerebro_data[i]))
+  })
+  crb_load_code <- paste0("c(", paste(file_vector, collapse = ",\n                          "), ")")
+  crb_files_code <- ""
 
   # Generate additional Cerebro options
   extra_options <- ""

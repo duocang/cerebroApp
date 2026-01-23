@@ -49,8 +49,13 @@ reactive_colors <- reactive({
       }
     }
     ## pick matching colorset if key exists; otherwise allow a single unnamed entry as default
-    if (!is.null(dataset_key) && !is.null(colors_option[[ dataset_key ]])) {
-      dataset_colors <- colors_option[[ dataset_key ]]
+    if (!is.null(dataset_key)) {
+      if (is.list(dataset_key)) {
+          dataset_key <- dataset_key[[1]]
+      }
+      if (!is.null(colors_option[[ dataset_key ]])) {
+        dataset_colors <- colors_option[[ dataset_key ]]
+      }
     } else if (length(colors_option) == 1 && is.null(names(colors_option))) {
       dataset_colors <- colors_option[[1]]
     }

@@ -86,8 +86,8 @@ server <- function(input, output, session) {
       !is.null(Cerebro.options[["crb_file_to_load"]])
     ) {
       file_to_load <- Cerebro.options[["crb_file_to_load"]]
-      ## check if file_to_load is a vector/list with multiple files
-      if (length(file_to_load) > 1) {
+      ## check if file_to_load is a vector/list with multiple files (or single named file)
+      if (length(file_to_load) > 1 || !is.null(names(file_to_load))) {
         ## store all available files
         available_crb_files$files <- file_to_load
         ## check if file_to_load has names (named list)
