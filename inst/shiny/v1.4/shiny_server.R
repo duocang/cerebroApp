@@ -161,6 +161,34 @@ server <- function(input, output, session) {
     return(data)
   })
 
+  ##--------------------------------------------------------------------------##
+  ## Adjust default point size based on number of cells.
+  ##--------------------------------------------------------------------------##
+  observe({
+    req(!is.null(data_set()))
+
+    ## only proceed if default point size is not specified in options
+    if (
+      !exists('Cerebro.options') ||
+      is.null(Cerebro.options[['projections_default_point_size']])
+    ) {
+
+      ## get number of cells
+      number_of_cells <- ncol(data_set()$expression)
+
+      ## adjust point size
+      if ( number_of_cells < 500 ) {
+        preferences$scatter_plot_point_size$default <- 8
+      } else if ( number_of_cells < 2000 ) {
+        preferences$scatter_plot_point_size$default <- 6
+      } else if ( number_of_cells < 10000 ) {
+        preferences$scatter_plot_point_size$default <- 3
+      } else {
+        preferences$scatter_plot_point_size$default <- 1
+      }
+    }
+  })
+
   # list of available trajectories
   available_trajectories <- reactive({
     req(!is.null(data_set()))
