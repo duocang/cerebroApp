@@ -24,9 +24,28 @@ output[["spatial_projection_main_parameters_UI"]] <- renderUI({
       choices = grep("^Spatial_", availableProjections(), value = TRUE)
     ),
     selectInput(
-      "spatial_projection_point_color",
-      label = "Color cells by",
-      choices = metadata_cols
+      "spatial_projection_plot_type",
+      label = "Plot type",
+      choices = c("ImageDimPlot", "ImageFeaturePlot"),
+      selected = "ImageDimPlot"
+    ),
+    conditionalPanel(
+      condition = "input.spatial_projection_plot_type == 'ImageDimPlot'",
+      selectInput(
+        "spatial_projection_point_color",
+        label = "Color cells by",
+        choices = metadata_cols
+      )
+    ),
+    conditionalPanel(
+      condition = "input.spatial_projection_plot_type == 'ImageFeaturePlot'",
+      selectizeInput(
+        "spatial_projection_feature_to_display",
+        label = "Feature/Gene",
+        choices = getGeneNames(),
+        multiple = FALSE,
+        options = list(maxOptions = 100, placeholder = 'Select a gene...')
+      )
     )
   )
 })

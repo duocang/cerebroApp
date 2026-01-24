@@ -258,6 +258,12 @@ exportFromSeurat <- function(
   }
 
   ## add expression data
+  message(
+    paste0(
+      '[', format(Sys.time(), '%H:%M:%S'), '] Adding expression data...'
+    )
+  )
+  print(expression_data[1:5, 1:5])
   export$setExpression(expression_data)
 
   ##--------------------------------------------------------------------------##
@@ -543,139 +549,53 @@ exportFromSeurat <- function(
 
     for ( image_name in names(object@images) ) {
       tryCatch({
-        image_obj <- object@images[[image_name]]
+        # Extract spatial data (coordinates + expression)
+        # Using .getSpatialData helper which handles Visium, FOV/Xenium, etc.
+        spatial_data <- .getSpatialData(object, image = image_name, layer = "data", assay = assay)
 
-        if ( inherits(image_obj, "VisiumV1") || inherits(image_obj, "VisiumV2") ) {
-          coords <- Seurat::GetTissueCoordinates(image_obj)
-          if ( !is.null(coords) && nrow(coords) > 0 ) {
-            coords_df <- as.data.frame(coords)
-            rownames(coords_df) <- coords_df$cell
-            coords_df <- coords_df[, c("imagerow", "imagecol"), drop = FALSE]
-            projection_name <- paste0("Spatial_", image_name)
-            export$addProjection(projection_name, coords_df)
-            if ( verbose ) {
-              message(
-                paste0(
-                  '[', format(Sys.time(), '%H:%M:%S'), '] ',
-                  'Added spatial projection: ', projection_name,
-                  ' (', nrow(coords_df), ' cells)'
-                )
+        # Add to Cerebro object
+        export$addSpatialData(image_name, spatial_data)
+
+        if ( verbose ) {
+          message(
+            paste0(
+              '[', format(Sys.time(), '%H:%M:%S'), '] ',
+              'Added spatial data: ', image_name,
+              ' (', nrow(spatial_data$coordinates), ' cells)'
+            )
+          )
+        }
+
+        # Also add coordinates as a projection for compatibility with existing visualization functions
+        coords_df <- spatial_data$coordinates
+
+        # Identify coordinate columns to use for projection (2D)
+        proj_cols <- character(0)
+
+        # Standard Visium
+        if ( all(c("imagerow", "imagecol") %in% colnames(coords_df)) ) {
+          proj_cols <- c("imagerow", "imagecol")
+        } else if ( all(c("x", "y") %in% colnames(coords_df)) ) {
+          # Standard FOV/Xenium/Other
+          proj_cols <- c("x", "y")
+        } else if ( ncol(coords_df) >= 2 ) {
+          # Fallback: use first two columns
+          proj_cols <- colnames(coords_df)[1:2]
+        }
+
+        if ( length(proj_cols) == 2 ) {
+          projection_df <- coords_df[, proj_cols, drop = FALSE]
+          projection_name <- paste0("Spatial_", image_name)
+
+          export$addProjection(projection_name, projection_df)
+
+          if ( verbose ) {
+            message(
+              paste0(
+                '[', format(Sys.time(), '%H:%M:%S'), '] ',
+                'Added spatial projection: ', projection_name
               )
-            }
-          }
-        } else if ( inherits(image_obj, "FOV") || inherits(image_obj, "Xenium") ) {
-          tryCatch({
-            # Seurat v5 FOV object (covers Xenium, CosMx, MERSCOPE, etc.)
-            # We prioritize extracting 'centroids' which provide x/y coordinates for each cell
-            coords <- NULL
-
-            # Try 1: GetTissueCoordinates with which='centroids' (standard v5)
-            coords <- try(Seurat::GetTissueCoordinates(image_obj, which = "centroids"), silent = TRUE)
-
-            # Try 2: GetTissueCoordinates default
-            if ( inherits(coords, "try-error") || is.null(coords) ) {
-              coords <- try(Seurat::GetTissueCoordinates(image_obj), silent = TRUE)
-            }
-
-            # Try 3: Direct access to coordinates slot (legacy/specific objects)
-            if ( (inherits(coords, "try-error") || is.null(coords)) && !is.null(image_obj@coordinates) ) {
-              coords <- image_obj@coordinates
-            }
-
-            if ( !inherits(coords, "try-error") && !is.null(coords) && nrow(coords) > 0 ) {
-              coords_df <- as.data.frame(coords)
-
-              # Ensure we have cell names as rownames
-              if ( "cell" %in% colnames(coords_df) ) {
-                rownames(coords_df) <- coords_df$cell
-              }
-
-              # Extract x and y coordinates
-              coord_cols <- intersect(c("x", "y"), colnames(coords_df))
-
-              if ( length(coord_cols) == 2 ) {
-                coords_df <- coords_df[, coord_cols, drop = FALSE]
-                projection_name <- paste0("Spatial_", image_name)
-                export$addProjection(projection_name, coords_df)
-                if ( verbose ) {
-                  message(
-                    paste0(
-                      '[', format(Sys.time(), '%H:%M:%S'), '] ',
-                      'Added spatial projection: ', projection_name,
-                      ' (', nrow(coords_df), ' cells)'
-                    )
-                  )
-                }
-              }
-            }
-          }, error = function(e) {
-            if ( verbose ) {
-              message(
-                paste0(
-                  '[', format(Sys.time(), '%H:%M:%S'), '] ',
-                  'Could not extract FOV/Xenium coordinates: ', e$message
-                )
-              )
-            }
-          })
-        } else if ( inherits(image_obj, "STARmap") || inherits(image_obj, "SlideSeq") ) {
-          coords <- Seurat::GetTissueCoordinates(image_obj)
-          if ( !is.null(coords) && nrow(coords) > 0 ) {
-            coords_df <- as.data.frame(coords)
-            rownames(coords_df) <- coords_df$cell
-            coord_cols <- intersect(c("x", "y"), colnames(coords_df))
-            if ( length(coord_cols) == 2 ) {
-              coords_df <- coords_df[, coord_cols, drop = FALSE]
-              projection_name <- paste0("Spatial_", image_name)
-              export$addProjection(projection_name, coords_df)
-              if ( verbose ) {
-                message(
-                  paste0(
-                    '[', format(Sys.time(), '%H:%M:%S'), '] ',
-                    'Added spatial projection: ', projection_name,
-                    ' (', nrow(coords_df), ' cells)'
-                  )
-                )
-              }
-            }
-          }
-        } else if ( inherits(image_obj, "Merged") ) {
-          for ( fov_name in names(image_obj@images) ) {
-            tryCatch({
-              fov_image <- image_obj@images[[fov_name]]
-              if ( !is.null(fov_image@coordinates) ) {
-                coords <- fov_image@coordinates
-                if ( nrow(coords) > 0 ) {
-                  coords_df <- as.data.frame(coords)
-                  rownames(coords_df) <- coords$cell
-                  coord_cols <- intersect(c("x", "y"), colnames(coords_df))
-                  if ( length(coord_cols) == 2 ) {
-                    coords_df <- coords_df[, coord_cols, drop = FALSE]
-                    projection_name <- paste0("Spatial_", image_name, "_", fov_name)
-                    export$addProjection(projection_name, coords_df)
-                    if ( verbose ) {
-                      message(
-                        paste0(
-                          '[', format(Sys.time(), '%H:%M:%S'), '] ',
-                          'Added spatial projection: ', projection_name,
-                          ' (', nrow(coords_df), ' cells)'
-                        )
-                      )
-                    }
-                  }
-                }
-              }
-            }, error = function(e) {
-              if ( verbose ) {
-                message(
-                  paste0(
-                    '[', format(Sys.time(), '%H:%M:%S'), '] ',
-                    'Could not extract coordinates from FOV ', fov_name,
-                    ': ', e$message
-                  )
-                )
-              }
-            })
+            )
           }
         }
       }, error = function(e) {
@@ -683,13 +603,20 @@ exportFromSeurat <- function(
           message(
             paste0(
               '[', format(Sys.time(), '%H:%M:%S'), '] ',
-              'Could not extract spatial data from image ', image_name,
-              ': ', e$message
+              'Could not extract spatial data for image `', image_name, '`: ', e$message
             )
           )
         }
       })
     }
+    message(
+      paste0(
+        '[', format(Sys.time(), '%H:%M:%S'), '] ',
+        'Expression data shape: ', paste(dim(expression_data), collapse = 'x')
+      )
+    )
+    expression_data <- spatial_data$expression
+    print(expression_data[1:5, 1:5])
   }
 
   ##--------------------------------------------------------------------------##

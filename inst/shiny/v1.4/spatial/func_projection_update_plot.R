@@ -3,40 +3,72 @@
 ##----------------------------------------------------------------------------##
 spatial_projection_update_plot <- function(input) {
   ## assign input data to new variables
-  cells_df <- input[['cells_df']]
-  coordinates <- input[['coordinates']]
-  reset_axes <- input[['reset_axes']]
-  plot_parameters <- input[['plot_parameters']]
+  metadata          <- input[['cells_df']]
+  coordinates       <- input[['coordinates']]
+  reset_axes        <- input[['reset_axes']]
+  plot_parameters   <- input[['plot_parameters']]
   color_assignments <- input[['color_assignments']]
-  hover_info <- input[['hover_info']]
-  color_input <- cells_df[[ plot_parameters[['color_variable']] ]]
+  hover_info        <- input[['hover_info']]
+  color_input       <- metadata[[ plot_parameters[['color_variable']] ]]
+
+  print("这里天鹏远发达")
+
+  print("metadata")
+  print(head(metadata))
+
+  print("coordinates")
+  print(head(coordinates))
+
+  print("color_input")
+  print(head(color_input))
+
+  print("plot_parameters")
+  print(plot_parameters)
+
+  print("hover_info")
+  print(head(hover_info))
 
   ## get container dimensions
   container_dimensions <- shinyjs::js$getContainerDimensions()
   container_info <- list(
-    width = container_dimensions[['width']],
+    width  = container_dimensions[['width']],
     height = container_dimensions[['height']]
   )
   ## follow this when the coloring variable is numeric
   if ( is.numeric(color_input) ) {
     ## put together meta data
     output_meta <- list(
-      color_type = 'continuous',
-      traces = plot_parameters[['color_variable']],
+      color_type     = 'continuous',
+      traces         = plot_parameters[['color_variable']],
       color_variable = plot_parameters[['color_variable']]
     )
     ## put together data
     output_data <- list(
-      x = coordinates[[1]],
-      y = coordinates[[2]],
-      color = color_input,
-      point_size = plot_parameters[["point_size"]],
+      x             = coordinates[[1]],
+      y             = coordinates[[2]],
+      color         = color_input,
+      point_size    = plot_parameters[["point_size"]],
       point_opacity = plot_parameters[["point_opacity"]],
-      point_line = list(),
-      x_range = plot_parameters[["x_range"]],
-      y_range = plot_parameters[["y_range"]],
-      reset_axes = reset_axes
+      point_line    = list(),
+      x_range       = plot_parameters[["x_range"]],
+      y_range       = plot_parameters[["y_range"]],
+      reset_axes    = reset_axes
     )
+
+    print(length(coordinates[[1]]))
+    print(length(coordinates[[2]]))
+    print(length(color_input))
+
+
+
+
+
+
+
+
+
+
+
     if ( plot_parameters[["draw_border"]] ) {
       output_data[['point_line']] <- list(
         color = "rgb(196,196,196)",
@@ -53,6 +85,8 @@ spatial_projection_update_plot <- function(input) {
     }
     ## send request to update projection to JavaScript functions (2D / 3D)
     if ( plot_parameters[['n_dimensions']] == 2 ) {
+
+      print("这里是2d")
       shinyjs::js$updatePlot2DContinuousSpatial(
         output_meta,
         output_data,
@@ -114,18 +148,18 @@ spatial_projection_update_plot <- function(input) {
         output_data[['color']][[i]] <- unname(color_assignments[which(names(color_assignments)==j)])
         if ( plot_parameters[["hover_info"]] ) {
           hover_info_matched <- match(
-            cells_df[['cell_barcode']][cells_to_extract],
+            metadata[['cell_barcode']][cells_to_extract],
             names(hover_info)
           )
           output_hover[['text']][[i]] <- unname(hover_info[hover_info_matched])
         }
         i <- i + 1
       }
-      group_centers_df <- centerOfGroups(coordinates, cells_df, 2, plot_parameters[['color_variable']])
+      group_centers_df <- centerOfGroups(coordinates, metadata, 2, plot_parameters[['color_variable']])
       output_group_centers <- list(
         group = group_centers_df[['group']],
-        x = group_centers_df[['x_median']],
-        y = group_centers_df[['y_median']]
+        x     = group_centers_df[['x_median']],
+        y     = group_centers_df[['y_median']]
       )
       shinyjs::js$updatePlot2DCategoricalSpatial(
         output_meta,
@@ -145,14 +179,14 @@ spatial_projection_update_plot <- function(input) {
         output_data[['color']][[i]] <- unname(color_assignments[which(names(color_assignments)==j)])
         if ( plot_parameters[["hover_info"]] ) {
           hover_info_matched <- match(
-            cells_df[['cell_barcode']][cells_to_extract],
+            metadata[['cell_barcode']][cells_to_extract],
             names(hover_info)
           )
           output_hover[['text']][[i]] <- unname(hover_info[hover_info_matched])
         }
         i <- i + 1
       }
-      group_centers_df <- centerOfGroups(coordinates, cells_df, 3, plot_parameters[['color_variable']])
+      group_centers_df <- centerOfGroups(coordinates, metadata, 3, plot_parameters[['color_variable']])
       output_group_centers <- list(
         group = group_centers_df[['group']],
         x = group_centers_df[['x_median']],

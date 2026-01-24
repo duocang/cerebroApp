@@ -8,3 +8,4 @@ tests
 .Rproj.user
 *.Rproj
 test_cerebro_app/
+test_data/

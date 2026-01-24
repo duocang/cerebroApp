@@ -474,6 +474,9 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   shinyjs.removeCustomLegend();
   const data = [];
+  const colorArray = params.data.color;
+  const colorMin = Math.min(...colorArray);
+  const colorMax = Math.max(...colorArray);
   data.push({
     x: params.data.x,
     y: params.data.y,
@@ -484,18 +487,18 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       opacity: params.data.point_opacity,
       line: params.data.point_line,
       color: params.data.color,
+      cmin: colorMin,
+      cmax: colorMax,
       colorscale: [
         [0, '#E8F4F8'],
         [0.2, '#D1E8ED'],
         [0.4, '#A8D0DC'],
         [0.6, '#7FB8CB'],
         [0.8, '#5B9FB8'],
-        [1, '#3D7A9E'],
+        [1, '#0a0d0eff'],
       ],
-      reversescale: true,
+      // reversescale: true,
       colorbar: {
-        len: 0,
-        thickness: 0,
         title: {
           text: params.meta.color_variable,
           font: {
@@ -506,8 +509,6 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       },
     },
     hoverinfo: params.hover.hoverinfo,
-    text: params.hover.text,
-    showlegend: false,
   });
   const layout_here = Object.assign(spatial_projection_layout_2D);
   if (params.data.reset_axes) {
@@ -537,6 +538,9 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   shinyjs.removeCustomLegend();
   const data = [];
+  const colorArray = params.data.color;
+  const colorMin = Math.min(...colorArray);
+  const colorMax = Math.max(...colorArray);
   data.push({
     x: params.data.x,
     y: params.data.y,
@@ -548,6 +552,8 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
       opacity: params.data.point_opacity,
       line: params.data.point_line,
       color: params.data.color,
+      cmin: colorMin,
+      cmax: colorMax,
       colorscale: [
         [0, '#E8F4F8'],
         [0.2, '#D1E8ED'],
@@ -558,8 +564,6 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
       ],
       reversescale: true,
       colorbar: {
-        len: 0,
-        thickness: 0,
         title: {
           text: params.meta.color_variable,
           font: {
@@ -569,8 +573,6 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
         },
       },
     },
-    hoverinfo: params.hover.hoverinfo,
-    text: params.hover.text,
     showlegend: false,
   });
   const layout_here = Object.assign(spatial_projection_layout_3D);
@@ -673,15 +675,17 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
       showlegend: false,
     });
   }
-  const layout_here = Object.assign(spatial_projection_layout_2D);
+  const layout_here = JSON.parse(JSON.stringify(spatial_projection_layout_2D));
   if (params.data.reset_axes) {
-    layout_here.xaxis['autorange'] = true;
-    layout_here.yaxis['autorange'] = true;
+    layout_here.xaxis.autorange = true;
+    delete layout_here.xaxis.range;
+    layout_here.yaxis.autorange = true;
+    delete layout_here.yaxis.range;
   } else {
-    layout_here.xaxis['autorange'] = false;
-    layout_here.xaxis['range'] = params.data.x_range;
-    layout_here.yaxis['autorange'] = false;
-    layout_here.yaxis['range'] = params.data.y_range;
+    layout_here.xaxis.autorange = false;
+    layout_here.xaxis.range = [...params.data.x_range];
+    layout_here.yaxis.autorange = false;
+    layout_here.yaxis.range = [...params.data.y_range];
   }
   if (params.container && params.container.width && params.container.height) {
     layout_here.width = params.container.width;
@@ -748,7 +752,7 @@ shinyjs.updatePlot3DCategoricalSpatial = function (params) {
       showlegend: false,
     });
   }
-  const layout_here = Object.assign(spatial_projection_layout_3D);
+  const layout_here = JSON.parse(JSON.stringify(spatial_projection_layout_3D));
   if (params.container && params.container.width && params.container.height) {
     layout_here.width = params.container.width;
     layout_here.height = params.container.height;

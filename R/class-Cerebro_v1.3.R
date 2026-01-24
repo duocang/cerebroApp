@@ -92,11 +92,14 @@ Cerebro_v1.3 <- R6::R6Class(
     #' format in a named \code{list} called `tables`
     extra_material = list(),
 
-    #' @field bcr_data \code{data.frame} that contains BCR data.
+    #' @field bcr_data \code{list} that contains BCR data.
     bcr_data = list(),
 
-    #' @field tcr_data \code{data.frame} that contains TCR data.
+    #' @field tcr_data \code{list} that contains TCR data.
     tcr_data = list(),
+
+    #' @field spatial \code{list} that contains spatial data (coordinates and expression).
+    spatial = list(),
 
     ##------------------------------------------------------------------------##
     ## methods to interact with the object
@@ -643,6 +646,32 @@ Cerebro_v1.3 <- R6::R6Class(
     #' @param data \code{list} that contains TCR data.
     addTCRData = function(data) {
       self$tcr_data <- data
+    },
+
+    #' @description
+    #' Add spatial data.
+    #'
+    #' @param name Name of the spatial data entry (e.g. image name).
+    #' @param data \code{list} containing 'coordinates' (data.frame) and 'expression' (sparse matrix).
+    addSpatialData = function(name, data) {
+      if ( !is.list(data) || !all(c("coordinates", "expression") %in% names(data)) ) {
+        stop("Spatial data must be a list containing 'coordinates' and 'expression'.")
+      }
+      self$spatial[[name]] <- data
+    },
+
+    #' @description
+    #' Retrieve spatial data.
+    #'
+    #' @param name Name of the spatial data entry.
+    #'
+    #' @return
+    #' \code{list} containing 'coordinates' and 'expression'.
+    getSpatialData = function(name) {
+      if ( name %in% names(self$spatial) == FALSE ) {
+        stop(glue::glue('Spatial data `{name}` is not available.'), call. = FALSE)
+      }
+      return(self$spatial[[name]])
     },
 
     #' @description

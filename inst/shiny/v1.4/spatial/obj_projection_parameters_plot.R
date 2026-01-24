@@ -5,8 +5,7 @@ spatial_projection_parameters_plot_raw <- reactive({
   req(
     input[["spatial_projection_to_display"]],
     input[["spatial_projection_to_display"]] %in% availableProjections(),
-    input[["spatial_projection_point_color"]],
-    input[["spatial_projection_point_color"]] %in% colnames(getMetaData()),
+    input[["spatial_projection_plot_type"]],
     input[["spatial_projection_point_size"]],
     input[["spatial_projection_point_opacity"]],
     !is.null(input[["spatial_projection_point_border"]]),
@@ -16,10 +15,24 @@ spatial_projection_parameters_plot_raw <- reactive({
     !is.null(preferences[["show_hover_info_in_projections"]])
   )
   # message('--> trigger "spatial_projection_parameters_plot"')
+
+  plot_type <- input[["spatial_projection_plot_type"]]
+  color_variable <- NULL
+  feature_to_display <- NULL
+
+  if (plot_type == "ImageDimPlot") {
+    color_variable <- input[["spatial_projection_point_color"]]
+  } else if (plot_type == "ImageFeaturePlot") {
+    feature_to_display <- input[["spatial_projection_feature_to_display"]]
+    color_variable <- feature_to_display
+  }
+
   parameters <- list(
     projection = input[["spatial_projection_to_display"]],
     n_dimensions = ncol(getProjection(input[["spatial_projection_to_display"]])),
-    color_variable = input[["spatial_projection_point_color"]],
+    color_variable = color_variable,
+    plot_type = plot_type,
+    feature_to_display = feature_to_display,
     point_size = input[["spatial_projection_point_size"]],
     point_opacity = input[["spatial_projection_point_opacity"]],
     draw_border = input[["spatial_projection_point_border"]],
