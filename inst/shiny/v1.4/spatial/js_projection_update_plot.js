@@ -643,6 +643,47 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
+
+  // Apply rotation if needed
+  const plotContainer = document.getElementById('spatial_projection');
+  const angle = plotContainer ? parseFloat(plotContainer.dataset.angle || 0) : 0;
+
+  // Stash original data
+  data.forEach((trace) => {
+    trace.orig_x = trace.x;
+    trace.orig_y = trace.y;
+  });
+
+  if (angle !== 0) {
+    let cx = 0,
+      cy = 0;
+    if (layout_here.images && layout_here.images.length > 0) {
+      const img = layout_here.images[0];
+      cx = img.x + img.sizex / 2;
+      cy = img.y - img.sizey / 2;
+    }
+    const rad = (-angle * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    data.forEach((trace) => {
+      if (Array.isArray(trace.x)) {
+        const newX = [];
+        const newY = [];
+        for (let j = 0; j < trace.x.length; j++) {
+          const x = trace.x[j];
+          const y = trace.y[j];
+          const dx = x - cx;
+          const dy = y - cy;
+          newX.push(dx * cos - dy * sin + cx);
+          newY.push(dx * sin + dy * cos + cy);
+        }
+        trace.x = newX;
+        trace.y = newY;
+      }
+    });
+  }
+
   Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
 };
 
@@ -694,7 +735,120 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
+
+  // Apply rotation if needed
+  const plotContainer = document.getElementById('spatial_projection');
+  const angle = plotContainer ? parseFloat(plotContainer.dataset.angle || 0) : 0;
+
+  // Stash original data
+  data.forEach((trace) => {
+    trace.orig_x = trace.x;
+    trace.orig_y = trace.y;
+  });
+
+  if (angle !== 0) {
+    let cx = 0,
+      cy = 0;
+    if (layout_here.images && layout_here.images.length > 0) {
+      const img = layout_here.images[0];
+      cx = img.x + img.sizex / 2;
+      cy = img.y - img.sizey / 2;
+    }
+    const rad = (-angle * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    data.forEach((trace) => {
+      if (Array.isArray(trace.x)) {
+        const newX = [];
+        const newY = [];
+        for (let j = 0; j < trace.x.length; j++) {
+          const x = trace.x[j];
+          const y = trace.y[j];
+          const dx = x - cx;
+          const dy = y - cy;
+          newX.push(dx * cos - dy * sin + cx);
+          newY.push(dx * sin + dy * cos + cy);
+        }
+        trace.x = newX;
+        trace.y = newY;
+      }
+    });
+  }
+
   Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
+};
+
+shinyjs.applySpatialRotation = function (plotContainer, angle, layout) {
+  if (!plotContainer || !plotContainer.data) return;
+
+  // Check if 2D
+  const is2D = plotContainer.data.length > 0 && (plotContainer.data[0].type === 'scattergl' || plotContainer.data[0].type === 'scatter');
+
+  if (!is2D) return;
+
+  // Calculate center from layout images
+  let cx = 0,
+    cy = 0;
+  if (layout && layout.images && layout.images.length > 0) {
+    const img = layout.images[0];
+    // Assuming xref='x', yref='y'
+    // x is left, y is top
+    cx = img.x + img.sizex / 2;
+    cy = img.y - img.sizey / 2;
+  }
+
+  // Convert to radians (CW rotation requires negative angle in Cartesian)
+  const rad = (-angle * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
+  const update = {
+    x: [],
+    y: [],
+  };
+  const indices = [];
+
+  for (let i = 0; i < plotContainer.data.length; i++) {
+    const trace = plotContainer.data[i];
+    // Skip if not scatter/scattergl (e.g. annotations?)
+    // Labels trace is 'scatter' mode 'text'. Should rotate too.
+
+    // Ensure we have original coordinates
+    let ox = trace.orig_x;
+    let oy = trace.orig_y;
+
+    if (!ox || !oy) {
+      // If missing, stash current.
+      // Note: This assumes current is "0 deg".
+      trace.orig_x = trace.x;
+      trace.orig_y = trace.y;
+      ox = trace.x;
+      oy = trace.y;
+    }
+
+    // Compute new coordinates
+    if (Array.isArray(ox)) {
+      const newX = [];
+      const newY = [];
+      for (let j = 0; j < ox.length; j++) {
+        const x = ox[j];
+        const y = oy[j];
+        // Rotate around (cx, cy)
+        const dx = x - cx;
+        const dy = y - cy;
+        newX.push(dx * cos - dy * sin + cx);
+        newY.push(dx * sin + dy * cos + cy);
+      }
+      update.x.push(newX);
+      update.y.push(newY);
+      indices.push(i);
+    }
+  }
+
+  if (indices.length > 0) {
+    Plotly.restyle(plotContainer, update, indices);
+  }
 };
 
 shinyjs.rotateSpatialProjection = function (angle) {
@@ -702,6 +856,9 @@ shinyjs.rotateSpatialProjection = function (angle) {
   if (plotContainer) {
     const parentContainer = plotContainer.parentElement;
     const isRotated = angle % 360 !== 0;
+
+    // Store angle for future updates
+    plotContainer.dataset.angle = angle;
 
     if (isRotated) {
       plotContainer.classList.add('is-rotated');
@@ -711,12 +868,14 @@ shinyjs.rotateSpatialProjection = function (angle) {
       parentContainer.style.overflow = ''; // Revert to default
     }
 
-    // Set CSS variable for text counter-rotation
-    plotContainer.style.setProperty('--spatial-rotation', -angle + 'deg');
+    // Apply data rotation instead of CSS rotation
+    // We need the layout to find the center
+    const layout = plotContainer.layout;
+    shinyjs.applySpatialRotation(plotContainer, angle, layout);
 
-    plotContainer.style.transform = `rotate(${angle}deg)`;
-    plotContainer.style.transition = 'transform 0.3s ease';
-    plotContainer.style.transformOrigin = 'center center';
+    // Remove CSS rotation if present (from previous version)
+    plotContainer.style.transform = '';
+    plotContainer.style.removeProperty('--spatial-rotation');
   }
   shinyjs.detachModebar();
 };
@@ -785,6 +944,26 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
     });
   }
   const layout_here = JSON.parse(JSON.stringify(spatial_projection_layout_2D));
+
+  if (params.meta.background_image && params.meta.image_bounds) {
+    layout_here.images = [
+      {
+        source: params.meta.background_image,
+        xref: 'x',
+        yref: 'y',
+        x: params.meta.image_bounds.xmin,
+        y: params.meta.image_bounds.ymax,
+        sizex: params.meta.image_bounds.xmax - params.meta.image_bounds.xmin,
+        sizey: params.meta.image_bounds.ymax - params.meta.image_bounds.ymin,
+        sizing: 'stretch',
+        opacity: 1,
+        layer: 'below',
+      },
+    ];
+  } else {
+    layout_here.images = [];
+  }
+
   if (params.data.reset_axes) {
     layout_here.xaxis.autorange = true;
     delete layout_here.xaxis.range;

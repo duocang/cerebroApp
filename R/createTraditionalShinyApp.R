@@ -212,6 +212,8 @@ formatRObject <- function(obj, indent = 0) {
 #' @export
 createTraditionalShinyApp <- function(cerebro_data,
                                       result_dir = NULL,
+                                      spatial_images = NULL,
+                                      spatial_rotation = NULL,
                                       version = "v1.4",
                                       max_request_size = 8000,
                                       port = 1337,
@@ -257,6 +259,28 @@ createTraditionalShinyApp <- function(cerebro_data,
     }
   }
 
+  # Validate spatial_images if provided
+  if (!is.null(spatial_images)) {
+    if (is.null(names(spatial_images)) || any(names(spatial_images) == "")) {
+      warning("spatial_images must be a named list or vector. Ignoring.", call. = FALSE)
+      spatial_images <- NULL
+    } else if (length(intersect(names(spatial_images), names(cerebro_data))) == 0) {
+      warning("No matching names found between spatial_images and cerebro_data. Ignoring.", call. = FALSE)
+      spatial_images <- NULL
+    }
+  }
+
+  # Validate spatial_rotation if provided
+  if (!is.null(spatial_rotation)) {
+    if (is.null(names(spatial_rotation)) || any(names(spatial_rotation) == "")) {
+      warning("spatial_rotation must be a named list or vector. Ignoring.", call. = FALSE)
+      spatial_rotation <- NULL
+    } else if (length(intersect(names(spatial_rotation), names(cerebro_data))) == 0) {
+      warning("No matching names found between spatial_rotation and cerebro_data. Ignoring.", call. = FALSE)
+      spatial_rotation <- NULL
+    }
+  }
+
   # Check if cerebroApp package is available
   if (!requireNamespace("cerebroApp", quietly = TRUE)) {
     stop("Package 'cerebroApp' is required but not installed.", call. = FALSE)
@@ -298,6 +322,39 @@ createTraditionalShinyApp <- function(cerebro_data,
     if (!copy_result) {
       stop("Failed to copy Cerebro data file: ", basename(file), call. = FALSE)
     }
+  }
+
+  # Copy spatial images (if any) ----------------------------------------------##
+  if (!is.null(spatial_images)) {
+    if (verbose) cat("Copying spatial images...\n")
+
+    # Helper to process and copy images recursively
+    process_spatial_images <- function(item) {
+      if (is.list(item)) {
+        return(lapply(item, process_spatial_images))
+      } else if (is.character(item)) {
+        new_paths <- character(length(item))
+        for (i in seq_along(item)) {
+          src_path <- item[i]
+          if (file.exists(src_path)) {
+            dest_name <- basename(src_path)
+            dest_path <- file.path(data_dir, dest_name)
+            file.copy(src_path, dest_path, overwrite = TRUE)
+            new_paths[i] <- file.path("data", dest_name)
+            if (verbose) cat("  -", dest_name, "\n")
+          } else {
+            warning("Spatial image not found: ", src_path, call. = FALSE)
+            new_paths[i] <- src_path
+          }
+        }
+        if (!is.null(names(item))) names(new_paths) <- names(item)
+        return(new_paths)
+      } else {
+        return(item)
+      }
+    }
+
+    spatial_images <- lapply(spatial_images, process_spatial_images)
   }
 
   # Copy extdata files (if any) -----------------------------------------------##
@@ -408,6 +465,53 @@ createTraditionalShinyApp <- function(cerebro_data,
   # Add colors to cerebro_options if provided
   colors_option <- if (!is.null(colors)) ',\n  "colors" = colors' else ''
 
+  # Add spatial_images to cerebro_options if provided
+  spatial_images_option <- ""
+  if (!is.null(spatial_images)) {
+    # Calculate alignment indentation for: '  "spatial_images" = list('
+    # 2 spaces + 16 chars + 3 chars + 5 chars = 26 spaces
+    indent_spaces <- strrep(" ", 26)
+
+    items <- vapply(names(spatial_images), function(n) {
+      val <- spatial_images[[n]]
+      # Use formatRObject with 0 indent, then shift all lines to match current indentation
+      val_str <- formatRObject(val, indent = 0)
+      if (grepl("\n", val_str)) {
+        val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+      }
+      paste0('"', n, '" = ', val_str)
+    }, character(1))
+
+    spatial_images_option <- paste0(',\n  "spatial_images" = list(',
+                                    paste(items, collapse = paste0(",\n", indent_spaces)),
+                                    ")")
+  }
+
+  # Add spatial_rotation to cerebro_options if provided
+  spatial_rotation_option <- ""
+  if (!is.null(spatial_rotation)) {
+    is_list <- is.list(spatial_rotation)
+    wrapper <- if (is_list) "list(" else "c("
+    # Calculate alignment indentation for: '  "spatial_initial_rotation" = '
+    # 2 spaces + 26 chars + 3 chars = 31 spaces
+    # Plus wrapper length
+    indent_len <- 31 + nchar(wrapper)
+    indent_spaces <- strrep(" ", indent_len)
+
+    items <- vapply(names(spatial_rotation), function(n) {
+      val <- spatial_rotation[[n]]
+      val_str <- formatRObject(val, indent = 0)
+      if (grepl("\n", val_str)) {
+        val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+      }
+      paste0('"', n, '" = ', val_str)
+    }, character(1))
+
+    spatial_rotation_option <- paste0(',\n  "spatial_initial_rotation" = ', wrapper,
+                                      paste(items, collapse = paste0(",\n", indent_spaces)),
+                                      ")")
+  }
+
   # Generate authentication code if enabled
   auth_code <- ""
   auth_wrapper_code <- ""
@@ -466,7 +570,7 @@ cerebro_root <- "."
 Cerebro.options <<- list(
   "mode" = "open",
   "crb_file_to_load" = {crb_load_code},
-  "cerebro_root" = cerebro_root{colors_option}{extra_options}
+  "cerebro_root" = cerebro_root{colors_option}{spatial_images_option}{spatial_rotation_option}{extra_options}
 )
 
 shiny_options <- list(
@@ -482,6 +586,9 @@ shiny_options <- list(
 ## 加载服务器和界面函数
 source(file.path(cerebro_root, "shiny/{version}/shiny_UI.R"))
 source(file.path(cerebro_root, "shiny/{version}/shiny_server.R"))
+
+## Expose data directory for spatial images
+shiny::addResourcePath("data", file.path(cerebro_root, "data"))
 
 ## Start Shiny App
 {auth_wrapper_code}

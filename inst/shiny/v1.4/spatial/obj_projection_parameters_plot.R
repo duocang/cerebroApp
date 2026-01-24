@@ -40,6 +40,7 @@ spatial_projection_parameters_plot_raw <- reactive({
     group_labels = input[["spatial_projection_show_group_label"]],
     x_range = input[["spatial_projection_scale_x_manual_range"]],
     y_range = input[["spatial_projection_scale_y_manual_range"]],
+    background_image = input[["spatial_projection_background_image"]],
     webgl = preferences[["use_webgl"]],
     hover_info = preferences[["show_hover_info_in_projections"]]
   )

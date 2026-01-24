@@ -17,6 +17,19 @@ output[["spatial_projection_main_parameters_UI"]] <- renderUI({
     metadata_cols <- colnames(getMetaData())[! colnames(getMetaData()) %in% c("cell_barcode")]
   }
 
+  ## prepare background image choices
+  background_choices <- c("No Background")
+  if (exists("Cerebro.options") && !is.null(Cerebro.options[["spatial_images"]]) &&
+      exists("available_crb_files") && !is.null(available_crb_files$selected)) {
+    match_idx <- which(available_crb_files$files == available_crb_files$selected)
+    if (length(match_idx) > 0) {
+      current_name <- names(available_crb_files$files)[match_idx[1]]
+      if (!is.null(current_name) && current_name %in% names(Cerebro.options[["spatial_images"]])) {
+        background_choices <- c("No Background", Cerebro.options[["spatial_images"]][[current_name]])
+      }
+    }
+  }
+
   tagList(
     selectInput(
       "spatial_projection_to_display",
@@ -51,7 +64,15 @@ output[["spatial_projection_main_parameters_UI"]] <- renderUI({
           loadThrottle = 300
         )
       )
-    )
+    ),
+    if (length(background_choices) > 1) {
+      selectInput(
+        "spatial_projection_background_image",
+        label = "Background image",
+        choices = background_choices,
+        selected = "No Background"
+      )
+    }
   )
 })
 

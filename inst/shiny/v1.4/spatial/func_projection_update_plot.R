@@ -17,13 +17,55 @@ spatial_projection_update_plot <- function(input) {
     width  = container_dimensions[['width']],
     height = container_dimensions[['height']]
   )
+
+  ## prepare background image data and bounds if selected
+  background_image_data <- NULL
+  image_bounds <- list()
+
+  if (!is.null(plot_parameters[['background_image']]) &&
+      plot_parameters[['background_image']] != "No Background") {
+
+    img_path <- plot_parameters[['background_image']]
+
+    if (file.exists(img_path)) {
+      # Calculate bounds from coordinates
+      x_rng <- range(coordinates[[1]], na.rm = TRUE)
+      y_rng <- range(coordinates[[2]], na.rm = TRUE)
+
+      image_bounds <- list(
+        xmin = x_rng[1],
+        xmax = x_rng[2],
+        ymin = y_rng[1],
+        ymax = y_rng[2]
+      )
+
+      # Encode image
+      ext <- tolower(tools::file_ext(img_path))
+      mime_type <- switch(ext,
+        "jpg" = "image/jpeg",
+        "jpeg" = "image/jpeg",
+        "png" = "image/png",
+        "image/jpeg"
+      )
+
+      try({
+         if (requireNamespace("base64enc", quietly = TRUE)) {
+           encoded <- base64enc::base64encode(img_path)
+           background_image_data <- paste0("data:", mime_type, ";base64,", encoded)
+         }
+      })
+    }
+  }
+
   ## follow this when the coloring variable is numeric
   if ( is.numeric(color_input) ) {
     ## put together meta data
     output_meta <- list(
       color_type     = 'continuous',
       traces         = plot_parameters[['color_variable']],
-      color_variable = plot_parameters[['color_variable']]
+      color_variable = plot_parameters[['color_variable']],
+      background_image = background_image_data,
+      image_bounds     = image_bounds
     )
     ## put together data
     output_data <- list(
@@ -77,7 +119,9 @@ spatial_projection_update_plot <- function(input) {
     output_meta <- list(
       color_type = 'categorical',
       traces = list(),
-      color_variable = plot_parameters[['color_variable']]
+      color_variable = plot_parameters[['color_variable']],
+      background_image = background_image_data,
+      image_bounds     = image_bounds
     )
     ## put together data
     output_data <- list(
