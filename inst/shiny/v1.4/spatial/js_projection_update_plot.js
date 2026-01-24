@@ -163,6 +163,52 @@ const spatial_projection_layout_2D = {
      .legend-item-hidden .legend-color-box {
        opacity: 0.4;
      }
+
+     /* Continuous Legend Styles */
+     .continuous-legend {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 12px;
+        z-index: 1000;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        cursor: move;
+        min-width: 80px;
+      }
+      .continuous-legend-title {
+        font-size: 13px;
+        color: #2D3748;
+        font-weight: 500;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+      .continuous-legend-gradient {
+        width: 20px;
+        height: 150px;
+        margin: 0 auto;
+        border-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .continuous-legend-labels {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 150px;
+        margin-left: 8px;
+      }
+      .continuous-legend-label {
+        font-size: 11px;
+        color: #718096;
+        font-weight: 400;
+      }
+      .continuous-legend-content {
+        display: flex;
+        align-items: center;
+      }
      .detached-modebar {
        position: absolute !important;
        top: 0px !important;
@@ -354,6 +400,67 @@ shinyjs.removeCustomLegend = function () {
   }
 };
 
+shinyjs.createContinuousLegend = function (title, colorMin, colorMax, colorscale) {
+  const plotContainer = document.getElementById('spatial_projection');
+  if (!plotContainer) return;
+
+  const parent = plotContainer.parentElement;
+  if (getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  let legendContainer = document.getElementById('spatial_projection_continuous_legend');
+  if (!legendContainer) {
+    legendContainer = document.createElement('div');
+    legendContainer.id = 'spatial_projection_continuous_legend';
+    parent.appendChild(legendContainer);
+  }
+
+  shinyjs.makeDraggable(legendContainer);
+  legendContainer.innerHTML = '';
+  legendContainer.style.display = 'block';
+  legendContainer.className = 'continuous-legend';
+
+  const titleEl = document.createElement('div');
+  titleEl.className = 'continuous-legend-title';
+  titleEl.innerText = title;
+  legendContainer.appendChild(titleEl);
+
+  const contentEl = document.createElement('div');
+  contentEl.className = 'continuous-legend-content';
+
+  const gradientEl = document.createElement('div');
+  gradientEl.className = 'continuous-legend-gradient';
+
+  const gradientColors = colorscale.map((item) => item[1]).join(', ');
+  gradientEl.style.background = `linear-gradient(to top, ${gradientColors})`;
+
+  const labelsEl = document.createElement('div');
+  labelsEl.className = 'continuous-legend-labels';
+
+  const minLabel = document.createElement('div');
+  minLabel.className = 'continuous-legend-label';
+  minLabel.innerText = colorMin.toFixed(2);
+
+  const maxLabel = document.createElement('div');
+  maxLabel.className = 'continuous-legend-label';
+  maxLabel.innerText = colorMax.toFixed(2);
+
+  labelsEl.appendChild(maxLabel);
+  labelsEl.appendChild(minLabel);
+
+  contentEl.appendChild(gradientEl);
+  contentEl.appendChild(labelsEl);
+  legendContainer.appendChild(contentEl);
+};
+
+shinyjs.removeContinuousLegend = function () {
+  const legendContainer = document.getElementById('spatial_projection_continuous_legend');
+  if (legendContainer) {
+    legendContainer.style.display = 'none';
+  }
+};
+
 // layout for 3D projections
 const spatial_projection_layout_3D = {
   uirevision: 'true',
@@ -473,10 +580,19 @@ const spatial_projection_default_params = {
 shinyjs.updatePlot2DContinuousSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   shinyjs.removeCustomLegend();
+  shinyjs.removeContinuousLegend();
   const data = [];
   const colorArray = params.data.color;
   const colorMin = Math.min(...colorArray);
   const colorMax = Math.max(...colorArray);
+  const colorscale = [
+    [0, '#E8F4F8'],
+    [0.2, '#D1E8ED'],
+    [0.4, '#A8D0DC'],
+    [0.6, '#7FB8CB'],
+    [0.8, '#5B9FB8'],
+    [1, '#3D7A9E'],
+  ];
   data.push({
     x: params.data.x,
     y: params.data.y,
@@ -489,27 +605,12 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       color: params.data.color,
       cmin: colorMin,
       cmax: colorMax,
-      colorscale: [
-        [0, '#E8F4F8'],
-        [0.2, '#D1E8ED'],
-        [0.4, '#A8D0DC'],
-        [0.6, '#7FB8CB'],
-        [0.8, '#5B9FB8'],
-        [1, '#0a0d0eff'],
-      ],
-      // reversescale: true,
-      colorbar: {
-        title: {
-          text: params.meta.color_variable,
-          font: {
-            color: '#2D3748',
-            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-          },
-        },
-      },
+      colorscale: colorscale,
+      showscale: false,
     },
     hoverinfo: params.hover.hoverinfo,
   });
+  shinyjs.createContinuousLegend(params.meta.color_variable, colorMin, colorMax, colorscale);
   const layout_here = Object.assign(spatial_projection_layout_2D);
   if (params.data.reset_axes) {
     layout_here.xaxis['autorange'] = true;
@@ -537,10 +638,19 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
 shinyjs.updatePlot3DContinuousSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
   shinyjs.removeCustomLegend();
+  shinyjs.removeContinuousLegend();
   const data = [];
   const colorArray = params.data.color;
   const colorMin = Math.min(...colorArray);
   const colorMax = Math.max(...colorArray);
+  const colorscale = [
+    [0, '#E8F4F8'],
+    [0.2, '#D1E8ED'],
+    [0.4, '#A8D0DC'],
+    [0.6, '#7FB8CB'],
+    [0.8, '#5B9FB8'],
+    [1, '#3D7A9E'],
+  ];
   data.push({
     x: params.data.x,
     y: params.data.y,
@@ -554,27 +664,13 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
       color: params.data.color,
       cmin: colorMin,
       cmax: colorMax,
-      colorscale: [
-        [0, '#E8F4F8'],
-        [0.2, '#D1E8ED'],
-        [0.4, '#A8D0DC'],
-        [0.6, '#7FB8CB'],
-        [0.8, '#5B9FB8'],
-        [1, '#3D7A9E'],
-      ],
+      colorscale: colorscale,
       reversescale: true,
-      colorbar: {
-        title: {
-          text: params.meta.color_variable,
-          font: {
-            color: '#2D3748',
-            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-          },
-        },
-      },
+      showscale: false,
     },
     showlegend: false,
   });
+  shinyjs.createContinuousLegend(params.meta.color_variable, colorMin, colorMax, colorscale);
   const layout_here = Object.assign(spatial_projection_layout_3D);
   if (params.container && params.container.width && params.container.height) {
     layout_here.width = params.container.width;
@@ -628,6 +724,7 @@ shinyjs.getContainerDimensions = function () {
 // update 2D projection with categorical coloring
 shinyjs.updatePlot2DCategoricalSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
+  shinyjs.removeContinuousLegend();
   shinyjs.createCustomLegend(params.meta.traces, params.data.color);
   const data = [];
   for (let i = 0; i < params.data.x.length; i++) {
@@ -703,6 +800,7 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
 // update 3D projection with categorical coloring
 shinyjs.updatePlot3DCategoricalSpatial = function (params) {
   params = shinyjs.getParams(params, spatial_projection_default_params);
+  shinyjs.removeContinuousLegend();
   shinyjs.createCustomLegend(params.meta.traces, params.data.color);
   const data = [];
   for (let i = 0; i < params.data.x.length; i++) {
