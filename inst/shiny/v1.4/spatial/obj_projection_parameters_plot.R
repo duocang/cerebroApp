@@ -24,6 +24,7 @@ spatial_projection_parameters_plot_raw <- reactive({
     color_variable <- input[["spatial_projection_point_color"]]
   } else if (plot_type == "ImageFeaturePlot") {
     feature_to_display <- input[["spatial_projection_feature_to_display"]]
+    req(feature_to_display)
     color_variable <- feature_to_display
   }
 
@@ -46,7 +47,7 @@ spatial_projection_parameters_plot_raw <- reactive({
   return(parameters)
 })
 
-spatial_projection_parameters_plot <- debounce(spatial_projection_parameters_plot_raw, 150)
+spatial_projection_parameters_plot <- debounce(spatial_projection_parameters_plot_raw, 500)
 
 ##
 spatial_projection_parameters_other <- reactiveValues(

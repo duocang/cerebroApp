@@ -44,7 +44,12 @@ output[["spatial_projection_main_parameters_UI"]] <- renderUI({
         label = "Feature/Gene",
         choices = getGeneNames(),
         multiple = FALSE,
-        options = list(maxOptions = 100, placeholder = 'Select a gene...')
+        options = list(
+          maxOptions = 1000,
+          placeholder = 'Select a gene...',
+          create = FALSE,
+          loadThrottle = 300
+        )
       )
     )
   )

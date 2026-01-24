@@ -73,180 +73,180 @@ const spatial_projection_layout_2D = {
       transform-origin: center center;
     }
     #spatial_projection .hoverlayer .hovertext {
-       transform: rotate(var(--spatial-rotation));
-       transform-box: fill-box;
-       transform-origin: center center;
-     }
+      transform: rotate(var(--spatial-rotation));
+      transform-box: fill-box;
+      transform-origin: center center;
+    }
 
-     /* Rotated State Styles */
-     #spatial_projection.is-rotated .main-svg {
-       background: rgba(0,0,0,0) !important;
-     }
-     #spatial_projection.is-rotated .bg {
-       fill-opacity: 0 !important;
-     }
-     #spatial_projection.is-rotated .cartesianlayer .xaxislayer-above,
-     #spatial_projection.is-rotated .cartesianlayer .yaxislayer-above,
-     #spatial_projection.is-rotated .cartesianlayer .gridlayer,
-     #spatial_projection.is-rotated .cartesianlayer .zerolinelayer,
-     #spatial_projection.is-rotated .infolayer .g-xtitle,
-     #spatial_projection.is-rotated .infolayer .g-ytitle {
-       display: none !important;
-     }
-     #spatial_projection.is-rotated .cartesianlayer .plot path,
-     #spatial_projection.is-rotated .cartesianlayer .plot rect {
-       stroke: none !important;
-       fill: none !important;
-     }
-     #spatial_projection.is-rotated .cartesianlayer .plot {
-       border: none !important;
-     }
-     #spatial_projection.is-rotated .cartesianlayer path,
-     #spatial_projection.is-rotated .cartesianlayer rect {
-       stroke: none !important;
-       fill: none !important;
-     }
-     #spatial_projection.is-rotated .cartesianlayer .xaxislayer-below path,
-     #spatial_projection.is-rotated .cartesianlayer .yaxislayer-below path {
-       stroke: none !important;
-     }
+    /* Rotated State Styles */
+    #spatial_projection.is-rotated .main-svg {
+      background: rgba(0,0,0,0) !important;
+    }
+    #spatial_projection.is-rotated .bg {
+      fill-opacity: 0 !important;
+    }
+    #spatial_projection.is-rotated .cartesianlayer .xaxislayer-above,
+    #spatial_projection.is-rotated .cartesianlayer .yaxislayer-above,
+    #spatial_projection.is-rotated .cartesianlayer .gridlayer,
+    #spatial_projection.is-rotated .cartesianlayer .zerolinelayer,
+    #spatial_projection.is-rotated .infolayer .g-xtitle,
+    #spatial_projection.is-rotated .infolayer .g-ytitle {
+      display: none !important;
+    }
+    #spatial_projection.is-rotated .cartesianlayer .plot path,
+    #spatial_projection.is-rotated .cartesianlayer .plot rect {
+      stroke: none !important;
+      fill: none !important;
+    }
+    #spatial_projection.is-rotated .cartesianlayer .plot {
+      border: none !important;
+    }
+    #spatial_projection.is-rotated .cartesianlayer path,
+    #spatial_projection.is-rotated .cartesianlayer rect {
+      stroke: none !important;
+      fill: none !important;
+    }
+    #spatial_projection.is-rotated .cartesianlayer .xaxislayer-below path,
+    #spatial_projection.is-rotated .cartesianlayer .yaxislayer-below path {
+      stroke: none !important;
+    }
 
-     /* Custom Legend Styles */
-     #spatial_projection_legend {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 12px;
-        max-height: 300px;
-        overflow-y: auto;
-        z-index: 1000;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        cursor: move;
-      }
-      .custom-legend-item {
-       display: flex;
-       align-items: center;
-       margin-bottom: 6px;
-       cursor: pointer;
-       user-select: none;
-       padding: 4px 6px;
-       border-radius: 4px;
-       transition: background-color 0.2s ease;
-     }
-     .custom-legend-item:hover {
-       background-color: rgba(91, 124, 153, 0.08);
-     }
-     .custom-legend-item:last-child {
-       margin-bottom: 0;
-     }
-     .legend-color-box {
-       width: 16px;
-       height: 16px;
-       margin-right: 10px;
-       border-radius: 4px;
-       flex-shrink: 0;
-       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-     }
-     .legend-text {
-       font-size: 13px;
-       color: #2D3748;
-       font-weight: 500;
-     }
-     .legend-item-hidden .legend-text {
-       text-decoration: line-through;
-       color: #A0AEC0;
-     }
-     .legend-item-hidden .legend-color-box {
-       opacity: 0.4;
-     }
+    /* Custom Legend Styles */
+    #spatial_projection_legend {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      cursor: move;
+    }
+    .custom-legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+    .custom-legend-item:hover {
+      background-color: rgba(91, 124, 153, 0.08);
+    }
+    .custom-legend-item:last-child {
+      margin-bottom: 0;
+    }
+    .legend-color-box {
+      width: 16px;
+      height: 16px;
+      margin-right: 10px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .legend-text {
+      font-size: 13px;
+      color: #2D3748;
+      font-weight: 500;
+    }
+    .legend-item-hidden .legend-text {
+      text-decoration: line-through;
+      color: #A0AEC0;
+    }
+    .legend-item-hidden .legend-color-box {
+      opacity: 0.4;
+    }
 
-     /* Continuous Legend Styles */
-     .continuous-legend {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 12px;
-        z-index: 1000;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        cursor: move;
-        min-width: 80px;
-      }
-      .continuous-legend-title {
-        font-size: 13px;
-        color: #2D3748;
-        font-weight: 500;
-        margin-bottom: 8px;
-        text-align: center;
-      }
-      .continuous-legend-gradient {
-        width: 20px;
-        height: 150px;
-        margin: 0 auto;
-        border-radius: 4px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-      }
-      .continuous-legend-labels {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 150px;
-        margin-left: 8px;
-      }
-      .continuous-legend-label {
-        font-size: 11px;
-        color: #718096;
-        font-weight: 400;
-      }
-      .continuous-legend-content {
-        display: flex;
-        align-items: center;
-      }
-     .detached-modebar {
-       position: absolute !important;
-       top: 0px !important;
-       right: 0px !important;
-       z-index: 1001 !important;
-     }
-     .detached-modebar .modebar-btn {
-       background: transparent;
-       border: none;
-       border-radius: 4px;
-       box-shadow: none;
-       transition: all 0.2s ease;
-     }
-     .detached-modebar .modebar-btn:hover {
-       background: rgba(91, 124, 153, 0.1);
-       border: none;
-       transform: translateY(-1px);
-       box-shadow: none;
-     }
-     .detached-modebar .modebar-btn svg {
-       fill: #5B7C99;
-     }
-     .detached-modebar .modebar-btn:hover svg {
-       fill: #3D5A73;
-     }
-     .detached-modebar .modebar-group {
-       display: flex !important;
-       flex-direction: row !important;
-       align-items: center !important;
-       gap: 4px !important;
-     }
-     .detached-modebar .modebar {
-       display: flex !important;
-       flex-direction: row !important;
-       align-items: center !important;
-       gap: 8px !important;
-     }
-   `;
+    /* Continuous Legend Styles */
+    .continuous-legend {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px;
+      z-index: 1000;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      cursor: move;
+      min-width: 80px;
+    }
+    .continuous-legend-title {
+      font-size: 13px;
+      color: #2D3748;
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .continuous-legend-gradient {
+      width: 20px;
+      height: 150px;
+      margin: 0 auto;
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .continuous-legend-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 150px;
+      margin-left: 8px;
+    }
+    .continuous-legend-label {
+      font-size: 11px;
+      color: #718096;
+      font-weight: 400;
+    }
+    .continuous-legend-content {
+      display: flex;
+      align-items: center;
+    }
+    .detached-modebar {
+      position: absolute !important;
+      top: 0px !important;
+      right: 0px !important;
+      z-index: 1001 !important;
+    }
+    .detached-modebar .modebar-btn {
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      box-shadow: none;
+      transition: all 0.2s ease;
+    }
+    .detached-modebar .modebar-btn:hover {
+      background: rgba(91, 124, 153, 0.1);
+      border: none;
+      transform: translateY(-1px);
+      box-shadow: none;
+    }
+    .detached-modebar .modebar-btn svg {
+      fill: #5B7C99;
+    }
+    .detached-modebar .modebar-btn:hover svg {
+      fill: #3D5A73;
+    }
+    .detached-modebar .modebar-group {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 4px !important;
+    }
+    .detached-modebar .modebar {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+  `;
   document.head.appendChild(style);
 })();
 

@@ -11,23 +11,6 @@ spatial_projection_update_plot <- function(input) {
   hover_info        <- input[['hover_info']]
   color_input       <- metadata[[ plot_parameters[['color_variable']] ]]
 
-  print("这里天鹏远发达")
-
-  print("metadata")
-  print(head(metadata))
-
-  print("coordinates")
-  print(head(coordinates))
-
-  print("color_input")
-  print(head(color_input))
-
-  print("plot_parameters")
-  print(plot_parameters)
-
-  print("hover_info")
-  print(head(hover_info))
-
   ## get container dimensions
   container_dimensions <- shinyjs::js$getContainerDimensions()
   container_info <- list(
@@ -55,20 +38,6 @@ spatial_projection_update_plot <- function(input) {
       reset_axes    = reset_axes
     )
 
-    print(length(coordinates[[1]]))
-    print(length(coordinates[[2]]))
-    print(length(color_input))
-
-
-
-
-
-
-
-
-
-
-
     if ( plot_parameters[["draw_border"]] ) {
       output_data[['point_line']] <- list(
         color = "rgb(196,196,196)",
@@ -85,8 +54,6 @@ spatial_projection_update_plot <- function(input) {
     }
     ## send request to update projection to JavaScript functions (2D / 3D)
     if ( plot_parameters[['n_dimensions']] == 2 ) {
-
-      print("这里是2d")
       shinyjs::js$updatePlot2DContinuousSpatial(
         output_meta,
         output_data,
