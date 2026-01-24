@@ -66,6 +66,8 @@ const spatial_projection_layout_2D = {
   style.innerHTML = `
     #spatial_projection {
       --spatial-rotation: 0deg;
+      transform-origin: center center;
+      z-index: 1;
     }
     #spatial_projection .textpoint text {
       transform: rotate(var(--spatial-rotation));
@@ -246,6 +248,19 @@ const spatial_projection_layout_2D = {
       align-items: center !important;
       gap: 8px !important;
     }
+    #spatial_projection_background {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: 100% 100%;
+      pointer-events: none;
+      transform-origin: center center;
+    }
   `;
   document.head.appendChild(style);
 })();
@@ -270,6 +285,59 @@ shinyjs.detachModebar = function () {
     parent.appendChild(modebar);
     modebar.classList.add('detached-modebar');
   }
+};
+
+shinyjs.syncSpatialBackground = function (backgroundImage, flipX, flipY, scaleX, scaleY, opacity) {
+  const plotContainer = document.getElementById('spatial_projection');
+  if (!plotContainer) return;
+  let parent = plotContainer.parentElement;
+  let wrapper = parent && parent.id === 'spatial_projection_wrapper' ? parent : null;
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.id = 'spatial_projection_wrapper';
+    wrapper.style.position = 'relative';
+    wrapper.style.width = '100%';
+    wrapper.style.height = '100%';
+    wrapper.style.overflow = 'hidden';
+    parent.insertBefore(wrapper, plotContainer);
+    wrapper.appendChild(plotContainer);
+  }
+  parent = wrapper;
+  let bg = document.getElementById('spatial_projection_background');
+  if (!bg) {
+    bg = document.createElement('div');
+    bg.id = 'spatial_projection_background';
+    parent.insertBefore(bg, plotContainer);
+  }
+  if (backgroundImage) {
+    bg.style.display = 'block';
+    bg.style.backgroundImage = `url("${backgroundImage}")`;
+    const baseScaleX = scaleX || 1;
+    const baseScaleY = scaleY || 1;
+    const finalScaleX = (flipX ? -1 : 1) * baseScaleX;
+    const finalScaleY = (flipY ? -1 : 1) * baseScaleY;
+    bg.style.transform = `scale(${finalScaleX}, ${finalScaleY})`;
+    bg.style.opacity = opacity === undefined || opacity === null ? 1 : opacity;
+    const size = plotContainer._fullLayout && plotContainer._fullLayout._size ? plotContainer._fullLayout._size : null;
+    if (size) {
+      bg.style.left = size.l + 'px';
+      bg.style.top = size.t + 'px';
+      bg.style.width = size.w + 'px';
+      bg.style.height = size.h + 'px';
+    } else {
+      bg.style.left = '0px';
+      bg.style.top = '0px';
+      bg.style.width = parent.clientWidth + 'px';
+      bg.style.height = parent.clientHeight + 'px';
+    }
+  } else {
+    bg.style.display = 'none';
+    bg.style.backgroundImage = '';
+    bg.style.transform = '';
+    bg.style.opacity = '';
+  }
+  plotContainer.style.position = 'relative';
+  plotContainer.style.zIndex = '1';
 };
 
 // Custom Legend Helper Functions
@@ -643,48 +711,17 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
-
-  // Apply rotation if needed
-  const plotContainer = document.getElementById('spatial_projection');
-  const angle = plotContainer ? parseFloat(plotContainer.dataset.angle || 0) : 0;
-
-  // Stash original data
-  data.forEach((trace) => {
-    trace.orig_x = trace.x;
-    trace.orig_y = trace.y;
+  Plotly.react('spatial_projection', data, layout_here).then(() => {
+    shinyjs.syncSpatialBackground(
+      params.meta.background_image,
+      params.meta.background_flip_x,
+      params.meta.background_flip_y,
+      params.meta.background_scale_x,
+      params.meta.background_scale_y,
+      params.meta.background_opacity
+    );
+    shinyjs.detachModebar();
   });
-
-  if (angle !== 0) {
-    let cx = 0,
-      cy = 0;
-    if (layout_here.images && layout_here.images.length > 0) {
-      const img = layout_here.images[0];
-      cx = img.x + img.sizex / 2;
-      cy = img.y - img.sizey / 2;
-    }
-    const rad = (-angle * Math.PI) / 180;
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-
-    data.forEach((trace) => {
-      if (Array.isArray(trace.x)) {
-        const newX = [];
-        const newY = [];
-        for (let j = 0; j < trace.x.length; j++) {
-          const x = trace.x[j];
-          const y = trace.y[j];
-          const dx = x - cx;
-          const dy = y - cy;
-          newX.push(dx * cos - dy * sin + cx);
-          newY.push(dx * sin + dy * cos + cy);
-        }
-        trace.x = newX;
-        trace.y = newY;
-      }
-    });
-  }
-
-  Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
 };
 
 // update 3D projection with continuous coloring
@@ -735,120 +772,10 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
-
-  // Apply rotation if needed
-  const plotContainer = document.getElementById('spatial_projection');
-  const angle = plotContainer ? parseFloat(plotContainer.dataset.angle || 0) : 0;
-
-  // Stash original data
-  data.forEach((trace) => {
-    trace.orig_x = trace.x;
-    trace.orig_y = trace.y;
+  Plotly.react('spatial_projection', data, layout_here).then(() => {
+    shinyjs.syncSpatialBackground(null, false, false, 1, 1, 1);
+    shinyjs.detachModebar();
   });
-
-  if (angle !== 0) {
-    let cx = 0,
-      cy = 0;
-    if (layout_here.images && layout_here.images.length > 0) {
-      const img = layout_here.images[0];
-      cx = img.x + img.sizex / 2;
-      cy = img.y - img.sizey / 2;
-    }
-    const rad = (-angle * Math.PI) / 180;
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-
-    data.forEach((trace) => {
-      if (Array.isArray(trace.x)) {
-        const newX = [];
-        const newY = [];
-        for (let j = 0; j < trace.x.length; j++) {
-          const x = trace.x[j];
-          const y = trace.y[j];
-          const dx = x - cx;
-          const dy = y - cy;
-          newX.push(dx * cos - dy * sin + cx);
-          newY.push(dx * sin + dy * cos + cy);
-        }
-        trace.x = newX;
-        trace.y = newY;
-      }
-    });
-  }
-
-  Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
-};
-
-shinyjs.applySpatialRotation = function (plotContainer, angle, layout) {
-  if (!plotContainer || !plotContainer.data) return;
-
-  // Check if 2D
-  const is2D = plotContainer.data.length > 0 && (plotContainer.data[0].type === 'scattergl' || plotContainer.data[0].type === 'scatter');
-
-  if (!is2D) return;
-
-  // Calculate center from layout images
-  let cx = 0,
-    cy = 0;
-  if (layout && layout.images && layout.images.length > 0) {
-    const img = layout.images[0];
-    // Assuming xref='x', yref='y'
-    // x is left, y is top
-    cx = img.x + img.sizex / 2;
-    cy = img.y - img.sizey / 2;
-  }
-
-  // Convert to radians (CW rotation requires negative angle in Cartesian)
-  const rad = (-angle * Math.PI) / 180;
-  const cos = Math.cos(rad);
-  const sin = Math.sin(rad);
-
-  const update = {
-    x: [],
-    y: [],
-  };
-  const indices = [];
-
-  for (let i = 0; i < plotContainer.data.length; i++) {
-    const trace = plotContainer.data[i];
-    // Skip if not scatter/scattergl (e.g. annotations?)
-    // Labels trace is 'scatter' mode 'text'. Should rotate too.
-
-    // Ensure we have original coordinates
-    let ox = trace.orig_x;
-    let oy = trace.orig_y;
-
-    if (!ox || !oy) {
-      // If missing, stash current.
-      // Note: This assumes current is "0 deg".
-      trace.orig_x = trace.x;
-      trace.orig_y = trace.y;
-      ox = trace.x;
-      oy = trace.y;
-    }
-
-    // Compute new coordinates
-    if (Array.isArray(ox)) {
-      const newX = [];
-      const newY = [];
-      for (let j = 0; j < ox.length; j++) {
-        const x = ox[j];
-        const y = oy[j];
-        // Rotate around (cx, cy)
-        const dx = x - cx;
-        const dy = y - cy;
-        newX.push(dx * cos - dy * sin + cx);
-        newY.push(dx * sin + dy * cos + cy);
-      }
-      update.x.push(newX);
-      update.y.push(newY);
-      indices.push(i);
-    }
-  }
-
-  if (indices.length > 0) {
-    Plotly.restyle(plotContainer, update, indices);
-  }
 };
 
 shinyjs.rotateSpatialProjection = function (angle) {
@@ -862,20 +789,13 @@ shinyjs.rotateSpatialProjection = function (angle) {
 
     if (isRotated) {
       plotContainer.classList.add('is-rotated');
-      parentContainer.style.overflow = 'visible';
+      parentContainer.style.overflow = 'hidden';
     } else {
       plotContainer.classList.remove('is-rotated');
-      parentContainer.style.overflow = ''; // Revert to default
+      parentContainer.style.overflow = 'hidden';
     }
-
-    // Apply data rotation instead of CSS rotation
-    // We need the layout to find the center
-    const layout = plotContainer.layout;
-    shinyjs.applySpatialRotation(plotContainer, angle, layout);
-
-    // Remove CSS rotation if present (from previous version)
-    plotContainer.style.transform = '';
-    plotContainer.style.removeProperty('--spatial-rotation');
+    plotContainer.style.transform = isRotated ? `rotate(${angle}deg)` : '';
+    plotContainer.style.setProperty('--spatial-rotation', `${-angle}deg`);
   }
   shinyjs.detachModebar();
 };
@@ -945,25 +865,6 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
   }
   const layout_here = JSON.parse(JSON.stringify(spatial_projection_layout_2D));
 
-  if (params.meta.background_image && params.meta.image_bounds) {
-    layout_here.images = [
-      {
-        source: params.meta.background_image,
-        xref: 'x',
-        yref: 'y',
-        x: params.meta.image_bounds.xmin,
-        y: params.meta.image_bounds.ymax,
-        sizex: params.meta.image_bounds.xmax - params.meta.image_bounds.xmin,
-        sizey: params.meta.image_bounds.ymax - params.meta.image_bounds.ymin,
-        sizing: 'stretch',
-        opacity: 1,
-        layer: 'below',
-      },
-    ];
-  } else {
-    layout_here.images = [];
-  }
-
   if (params.data.reset_axes) {
     layout_here.xaxis.autorange = true;
     delete layout_here.xaxis.range;
@@ -985,7 +886,17 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
-  Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
+  Plotly.react('spatial_projection', data, layout_here).then(() => {
+    shinyjs.syncSpatialBackground(
+      params.meta.background_image,
+      params.meta.background_flip_x,
+      params.meta.background_flip_y,
+      params.meta.background_scale_x,
+      params.meta.background_scale_y,
+      params.meta.background_opacity
+    );
+    shinyjs.detachModebar();
+  });
 };
 
 // update 3D projection with categorical coloring
@@ -1052,5 +963,8 @@ shinyjs.updatePlot3DCategoricalSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
-  Plotly.react('spatial_projection', data, layout_here).then(() => shinyjs.detachModebar());
+  Plotly.react('spatial_projection', data, layout_here).then(() => {
+    shinyjs.syncSpatialBackground(null, false, false, 1, 1, 1);
+    shinyjs.detachModebar();
+  });
 };

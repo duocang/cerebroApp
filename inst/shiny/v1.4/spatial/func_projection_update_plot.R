@@ -65,7 +65,12 @@ spatial_projection_update_plot <- function(input) {
       traces         = plot_parameters[['color_variable']],
       color_variable = plot_parameters[['color_variable']],
       background_image = background_image_data,
-      image_bounds     = image_bounds
+      image_bounds     = image_bounds,
+      background_flip_x = plot_parameters[['background_flip_x']],
+      background_flip_y = plot_parameters[['background_flip_y']],
+      background_scale_x = plot_parameters[['background_scale_x']],
+      background_scale_y = plot_parameters[['background_scale_y']],
+      background_opacity = plot_parameters[['background_opacity']]
     )
     ## put together data
     output_data <- list(
@@ -121,7 +126,12 @@ spatial_projection_update_plot <- function(input) {
       traces = list(),
       color_variable = plot_parameters[['color_variable']],
       background_image = background_image_data,
-      image_bounds     = image_bounds
+      image_bounds     = image_bounds,
+      background_flip_x = plot_parameters[['background_flip_x']],
+      background_flip_y = plot_parameters[['background_flip_y']],
+      background_scale_x = plot_parameters[['background_scale_x']],
+      background_scale_y = plot_parameters[['background_scale_y']],
+      background_opacity = plot_parameters[['background_opacity']]
     )
     ## put together data
     output_data <- list(

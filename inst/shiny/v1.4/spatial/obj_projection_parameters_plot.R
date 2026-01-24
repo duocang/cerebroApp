@@ -28,6 +28,9 @@ spatial_projection_parameters_plot_raw <- reactive({
     color_variable <- feature_to_display
   }
 
+  background_opacity <- if (is.null(input[["spatial_projection_background_opacity"]])) 1 else input[["spatial_projection_background_opacity"]]
+  background_scale_x <- if (is.null(input[["spatial_projection_background_scale_x"]])) 1 else input[["spatial_projection_background_scale_x"]]
+  background_scale_y <- if (is.null(input[["spatial_projection_background_scale_y"]])) 1 else input[["spatial_projection_background_scale_y"]]
   parameters <- list(
     projection = input[["spatial_projection_to_display"]],
     n_dimensions = ncol(getProjection(input[["spatial_projection_to_display"]])),
@@ -41,6 +44,11 @@ spatial_projection_parameters_plot_raw <- reactive({
     x_range = input[["spatial_projection_scale_x_manual_range"]],
     y_range = input[["spatial_projection_scale_y_manual_range"]],
     background_image = input[["spatial_projection_background_image"]],
+    background_flip_x = spatial_projection_parameters_other[['background_flip_x']],
+    background_flip_y = spatial_projection_parameters_other[['background_flip_y']],
+    background_scale_x = background_scale_x,
+    background_scale_y = background_scale_y,
+    background_opacity = background_opacity,
     webgl = preferences[["use_webgl"]],
     hover_info = preferences[["show_hover_info_in_projections"]]
   )
@@ -52,11 +60,39 @@ spatial_projection_parameters_plot <- debounce(spatial_projection_parameters_plo
 
 ##
 spatial_projection_parameters_other <- reactiveValues(
-  reset_axes = FALSE
+  reset_axes = FALSE,
+  background_flip_x = FALSE,
+  background_flip_y = FALSE
 )
 
 ##
 observeEvent(input[['spatial_projection_to_display']], {
   # message('--> set "spatial: reset_axes"')
   spatial_projection_parameters_other[['reset_axes']] <- TRUE
+})
+
+observeEvent(input[['spatial_projection_background_flip_x']], {
+  spatial_projection_parameters_other[['background_flip_x']] <- !spatial_projection_parameters_other[['background_flip_x']]
+})
+
+observeEvent(input[['spatial_projection_background_flip_y']], {
+  spatial_projection_parameters_other[['background_flip_y']] <- !spatial_projection_parameters_other[['background_flip_y']]
+})
+
+observeEvent(input[['spatial_projection_background_reset']], {
+  spatial_projection_parameters_other[['background_flip_x']] <- FALSE
+  spatial_projection_parameters_other[['background_flip_y']] <- FALSE
+  updateSliderInput(session, "spatial_projection_background_scale_x", value = 1)
+  updateSliderInput(session, "spatial_projection_background_scale_y", value = 1)
+  updateSliderInput(session, "spatial_projection_background_opacity", value = 1)
+})
+
+observeEvent(input[['spatial_projection_background_image']], {
+  if (is.null(input[["spatial_projection_background_image"]]) || input[["spatial_projection_background_image"]] == "No Background") {
+    spatial_projection_parameters_other[['background_flip_x']] <- FALSE
+    spatial_projection_parameters_other[['background_flip_y']] <- FALSE
+    updateSliderInput(session, "spatial_projection_background_scale_x", value = 1)
+    updateSliderInput(session, "spatial_projection_background_scale_y", value = 1)
+    updateSliderInput(session, "spatial_projection_background_opacity", value = 1)
+  }
 })

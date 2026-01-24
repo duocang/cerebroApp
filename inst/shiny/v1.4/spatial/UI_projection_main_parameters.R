@@ -66,11 +66,61 @@ output[["spatial_projection_main_parameters_UI"]] <- renderUI({
       )
     ),
     if (length(background_choices) > 1) {
-      selectInput(
-        "spatial_projection_background_image",
-        label = "Background image",
-        choices = background_choices,
-        selected = "No Background"
+      tagList(
+        selectInput(
+          "spatial_projection_background_image",
+          label = "Background image",
+          choices = background_choices,
+          selected = "No Background"
+        ),
+        conditionalPanel(
+          condition = "input.spatial_projection_background_image && input.spatial_projection_background_image !== 'No Background'",
+          tagList(
+            div(
+              style = "display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;",
+              actionButton(
+                inputId = "spatial_projection_background_flip_x",
+                label = "Flip Left/Right",
+                class = "btn-xs"
+              ),
+              actionButton(
+                inputId = "spatial_projection_background_flip_y",
+                label = "Flip Up/Down",
+                class = "btn-xs"
+              ),
+              actionButton(
+                inputId = "spatial_projection_background_reset",
+                label = "Reset",
+                class = "btn-xs"
+              )
+            ),
+            sliderInput(
+              inputId = "spatial_projection_background_scale_x",
+              label = "Stretch Left/Right",
+              min = 0.5,
+              max = 1.5,
+              value = 1,
+              step = 0.05
+            ),
+            sliderInput(
+              inputId = "spatial_projection_background_scale_y",
+              label = "Stretch Up/Down",
+              min = 0.5,
+              max = 1.5,
+              value = 1,
+              step = 0.05
+            ),
+            sliderInput(
+              inputId = "spatial_projection_background_opacity",
+              label = "Image opacity",
+              default = 0.6,
+              min = 0,
+              max = 1,
+              value = 1,
+              step = 0.05
+            )
+          )
+        )
       )
     }
   )
