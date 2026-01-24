@@ -216,23 +216,35 @@ const spatial_projection_layout_2D = {
        z-index: 1001 !important;
      }
      .detached-modebar .modebar-btn {
-       background: rgba(255, 255, 255, 0.95);
-       border: 1px solid #E2E8F0;
+       background: transparent;
+       border: none;
        border-radius: 4px;
-       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+       box-shadow: none;
        transition: all 0.2s ease;
      }
      .detached-modebar .modebar-btn:hover {
        background: rgba(91, 124, 153, 0.1);
-       border-color: #5B7C99;
+       border: none;
        transform: translateY(-1px);
-       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+       box-shadow: none;
      }
      .detached-modebar .modebar-btn svg {
        fill: #5B7C99;
      }
      .detached-modebar .modebar-btn:hover svg {
        fill: #3D5A73;
+     }
+     .detached-modebar .modebar-group {
+       display: flex !important;
+       flex-direction: row !important;
+       align-items: center !important;
+       gap: 4px !important;
+     }
+     .detached-modebar .modebar {
+       display: flex !important;
+       flex-direction: row !important;
+       align-items: center !important;
+       gap: 8px !important;
      }
    `;
   document.head.appendChild(style);
