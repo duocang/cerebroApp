@@ -701,6 +701,19 @@ a:hover {
   padding: 8px 0;
 }
 
+.spatial-projection-dropdown {
+  position: relative;
+  z-index: 2000;
+}
+
+.spatial-projection-dropdown .dropdown-menu {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 6px;
+  z-index: 2001;
+}
+
 .dropdown-menu > li > a {
   padding: 8px 20px;
   color: var(--text-primary);

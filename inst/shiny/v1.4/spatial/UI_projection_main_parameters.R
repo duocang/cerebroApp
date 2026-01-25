@@ -113,10 +113,9 @@ output[["spatial_projection_main_parameters_UI"]] <- renderUI({
             sliderInput(
               inputId = "spatial_projection_background_opacity",
               label = "Image opacity",
-              default = 0.6,
               min = 0,
               max = 1,
-              value = 1,
+              value = 0.6,
               step = 0.05
             )
           )
