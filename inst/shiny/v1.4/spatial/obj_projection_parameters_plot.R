@@ -73,10 +73,22 @@ observeEvent(input[['spatial_projection_to_display']], {
 
 observeEvent(input[['spatial_projection_background_flip_x']], {
   spatial_projection_parameters_other[['background_flip_x']] <- !spatial_projection_parameters_other[['background_flip_x']]
+  flipped <- spatial_projection_parameters_other[['background_flip_x']]
+  if (flipped) {
+    shinyjs::runjs("$('#spatial_projection_background_flip_x').text('Flipped L/R').addClass('flipped');")
+  } else {
+    shinyjs::runjs("$('#spatial_projection_background_flip_x').text('Flip Left/Right').removeClass('flipped');")
+  }
 })
 
 observeEvent(input[['spatial_projection_background_flip_y']], {
   spatial_projection_parameters_other[['background_flip_y']] <- !spatial_projection_parameters_other[['background_flip_y']]
+  flipped <- spatial_projection_parameters_other[['background_flip_y']]
+  if (flipped) {
+    shinyjs::runjs("$('#spatial_projection_background_flip_y').text('Flipped U/D').addClass('flipped');")
+  } else {
+    shinyjs::runjs("$('#spatial_projection_background_flip_y').text('Flip Up/Down').removeClass('flipped');")
+  }
 })
 
 observeEvent(input[['spatial_projection_background_reset']], {
@@ -85,6 +97,8 @@ observeEvent(input[['spatial_projection_background_reset']], {
   updateSliderInput(session, "spatial_projection_background_scale_x", value = 1)
   updateSliderInput(session, "spatial_projection_background_scale_y", value = 1)
   updateSliderInput(session, "spatial_projection_background_opacity", value = 1)
+  shinyjs::runjs("$('#spatial_projection_background_flip_x').text('Flip Left/Right').removeClass('flipped');")
+  shinyjs::runjs("$('#spatial_projection_background_flip_y').text('Flip Up/Down').removeClass('flipped');")
 })
 
 observeEvent(input[['spatial_projection_background_image']], {
@@ -94,5 +108,7 @@ observeEvent(input[['spatial_projection_background_image']], {
     updateSliderInput(session, "spatial_projection_background_scale_x", value = 1)
     updateSliderInput(session, "spatial_projection_background_scale_y", value = 1)
     updateSliderInput(session, "spatial_projection_background_opacity", value = 1)
+    shinyjs::runjs("$('#spatial_projection_background_flip_x').text('Flip Left/Right').removeClass('flipped');")
+    shinyjs::runjs("$('#spatial_projection_background_flip_y').text('Flip Up/Down').removeClass('flipped');")
   }
 })

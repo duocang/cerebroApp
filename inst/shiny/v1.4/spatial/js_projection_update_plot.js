@@ -307,6 +307,7 @@ shinyjs.syncSpatialBackground = function (backgroundImage, flipX, flipY, scaleX,
   if (!bg) {
     bg = document.createElement('div');
     bg.id = 'spatial_projection_background';
+    bg.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
     parent.insertBefore(bg, plotContainer);
   }
   if (backgroundImage) {
