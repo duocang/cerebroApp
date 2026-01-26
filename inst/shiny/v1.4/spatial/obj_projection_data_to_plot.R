@@ -45,10 +45,32 @@ spatial_projection_data_to_plot_raw <- reactive({
     )
   }
 
+  ## Apply rotation to coordinates if configured
+  coordinates <- spatial_projection_coordinates()
+  if (exists("Cerebro.options") && !is.null(Cerebro.options[["spatial_plot_rotation"]]) &&
+      exists("available_crb_files") && !is.null(available_crb_files$selected)) {
+    match_idx <- which(available_crb_files$files == available_crb_files$selected)
+    if (length(match_idx) > 0) {
+      current_name <- names(available_crb_files$files)[match_idx[1]]
+      if (!is.null(current_name) && current_name %in% names(Cerebro.options[["spatial_plot_rotation"]])) {
+        rotation_angle <- Cerebro.options[["spatial_plot_rotation"]][[current_name]]
+        if (!is.null(rotation_angle) && rotation_angle != 0) {
+          theta <- rotation_angle * pi / 180
+          cos_theta <- cos(theta)
+          sin_theta <- sin(theta)
+          x <- coordinates[, 1]
+          y <- coordinates[, 2]
+          coordinates[, 1] <- x * cos_theta - y * sin_theta
+          coordinates[, 2] <- x * sin_theta + y * cos_theta
+        }
+      }
+    }
+  }
+
   ## return collect data
   to_return <- list(
     cells_df = metadata,
-    coordinates = spatial_projection_coordinates(),
+    coordinates = coordinates,
     reset_axes = isolate(spatial_projection_parameters_other[['reset_axes']]),
     plot_parameters = plot_parameters,
     color_assignments = color_assignments,

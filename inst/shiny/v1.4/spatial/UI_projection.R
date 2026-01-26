@@ -63,14 +63,6 @@ output[["spatial_projection_UI"]] <- renderUI({
             class = "btn-xs",
             style = "margin-right: 3px"
           ),
-          actionButton(
-            inputId = "spatial_projection_reset_rotation",
-            label = "Reset",
-            title = "Reset rotation to 0 degrees.",
-            icon = NULL,
-            class = "btn-xs",
-            style = "margin-right: 3px; position: relative; z-index: 9999;"
-          ),
           #shinyFiles::shinySaveButton(
            # "spatial_projection_export",
             #label = "export to PDF",
@@ -102,16 +94,6 @@ output[["spatial_projection_UI"]] <- renderUI({
             ),
             type = 8,
             hide.ui = FALSE
-          ),
-          tags$br(),
-          sliderInput(
-            inputId = "spatial_projection_rotation",
-            label = "Rotation",
-            min = 0,
-            max = 360,
-            value = 0,
-            step = 1,
-            width = "100%"
           ),
           tags$br(),
           htmlOutput("spatial_number_of_selected_cells"),

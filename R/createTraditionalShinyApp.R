@@ -213,7 +213,11 @@ formatRObject <- function(obj, indent = 0) {
 createTraditionalShinyApp <- function(cerebro_data,
                                       result_dir = NULL,
                                       spatial_images = NULL,
-                                      spatial_rotation = NULL,
+                                      spatial_plot_rotation = NULL,
+                                      spatial_images_flip_x = NULL,
+                                      spatial_images_flip_y = NULL,
+                                      spatial_images_scale_x = NULL,
+                                      spatial_images_scale_y = NULL,
                                       version = "v1.4",
                                       max_request_size = 8000,
                                       port = 1337,
@@ -270,14 +274,58 @@ createTraditionalShinyApp <- function(cerebro_data,
     }
   }
 
-  # Validate spatial_rotation if provided
-  if (!is.null(spatial_rotation)) {
-    if (is.null(names(spatial_rotation)) || any(names(spatial_rotation) == "")) {
-      warning("spatial_rotation must be a named list or vector. Ignoring.", call. = FALSE)
-      spatial_rotation <- NULL
-    } else if (length(intersect(names(spatial_rotation), names(cerebro_data))) == 0) {
-      warning("No matching names found between spatial_rotation and cerebro_data. Ignoring.", call. = FALSE)
-      spatial_rotation <- NULL
+  # Validate spatial_plot_rotation if provided
+  if (!is.null(spatial_plot_rotation)) {
+    if (is.null(names(spatial_plot_rotation)) || any(names(spatial_plot_rotation) == "")) {
+      warning("spatial_plot_rotation must be a named list or vector. Ignoring.", call. = FALSE)
+      spatial_plot_rotation <- NULL
+    } else if (length(intersect(names(spatial_plot_rotation), names(cerebro_data))) == 0) {
+      warning("No matching names found between spatial_plot_rotation and cerebro_data. Ignoring.", call. = FALSE)
+      spatial_plot_rotation <- NULL
+    }
+  }
+
+  # Validate spatial_images_flip_x if provided
+  if (!is.null(spatial_images_flip_x)) {
+    if (is.null(names(spatial_images_flip_x)) || any(names(spatial_images_flip_x) == "")) {
+      warning("spatial_images_flip_x must be a named list or vector. Ignoring.", call. = FALSE)
+      spatial_images_flip_x <- NULL
+    } else if (length(intersect(names(spatial_images_flip_x), names(cerebro_data))) == 0) {
+      warning("No matching names found between spatial_images_flip_x and cerebro_data. Ignoring.", call. = FALSE)
+      spatial_images_flip_x <- NULL
+    }
+  }
+
+  # Validate spatial_images_flip_y if provided
+  if (!is.null(spatial_images_flip_y)) {
+    if (is.null(names(spatial_images_flip_y)) || any(names(spatial_images_flip_y) == "")) {
+      warning("spatial_images_flip_y must be a named list or vector. Ignoring.", call. = FALSE)
+      spatial_images_flip_y <- NULL
+    } else if (length(intersect(names(spatial_images_flip_y), names(cerebro_data))) == 0) {
+      warning("No matching names found between spatial_images_flip_y and cerebro_data. Ignoring.", call. = FALSE)
+      spatial_images_flip_y <- NULL
+    }
+  }
+
+  # Validate spatial_images_scale_x if provided
+  if (!is.null(spatial_images_scale_x)) {
+    if (is.null(names(spatial_images_scale_x)) || any(names(spatial_images_scale_x) == "")) {
+      warning("spatial_images_scale_x must be a named list or vector. Ignoring.", call. = FALSE)
+      spatial_images_scale_x <- NULL
+    } else if (length(intersect(names(spatial_images_scale_x), names(cerebro_data))) == 0) {
+      warning("No matching names found between spatial_images_scale_x and cerebro_data. Ignoring.", call. = FALSE)
+      spatial_images_scale_x <- NULL
+    }
+  }
+
+  # Validate spatial_images_scale_y if provided
+  if (!is.null(spatial_images_scale_y)) {
+    if (is.null(names(spatial_images_scale_y)) || any(names(spatial_images_scale_y) == "")) {
+      warning("spatial_images_scale_y must be a named list or vector. Ignoring.", call. = FALSE)
+      spatial_images_scale_y <- NULL
+    } else if (length(intersect(names(spatial_images_scale_y), names(cerebro_data))) == 0) {
+      warning("No matching names found between spatial_images_scale_y and cerebro_data. Ignoring.", call. = FALSE)
+      spatial_images_scale_y <- NULL
     }
   }
 
@@ -487,19 +535,19 @@ createTraditionalShinyApp <- function(cerebro_data,
                                     ")")
   }
 
-  # Add spatial_rotation to cerebro_options if provided
-  spatial_rotation_option <- ""
-  if (!is.null(spatial_rotation)) {
-    is_list <- is.list(spatial_rotation)
+  # Add spatial_plot_rotation to cerebro_options if provided
+  spatial_plot_rotation_option <- ""
+  if (!is.null(spatial_plot_rotation)) {
+    is_list <- is.list(spatial_plot_rotation)
     wrapper <- if (is_list) "list(" else "c("
-    # Calculate alignment indentation for: '  "spatial_initial_rotation" = '
+    # Calculate alignment indentation for: '  "spatial_plot_rotation" = '
     # 2 spaces + 26 chars + 3 chars = 31 spaces
     # Plus wrapper length
     indent_len <- 31 + nchar(wrapper)
     indent_spaces <- strrep(" ", indent_len)
 
-    items <- vapply(names(spatial_rotation), function(n) {
-      val <- spatial_rotation[[n]]
+    items <- vapply(names(spatial_plot_rotation), function(n) {
+      val <- spatial_plot_rotation[[n]]
       val_str <- formatRObject(val, indent = 0)
       if (grepl("\n", val_str)) {
         val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
@@ -507,9 +555,109 @@ createTraditionalShinyApp <- function(cerebro_data,
       paste0('"', n, '" = ', val_str)
     }, character(1))
 
-    spatial_rotation_option <- paste0(',\n  "spatial_initial_rotation" = ', wrapper,
+    spatial_plot_rotation_option <- paste0(',\n  "spatial_plot_rotation" = ', wrapper,
                                       paste(items, collapse = paste0(",\n", indent_spaces)),
                                       ")")
+  }
+
+  # Add spatial_images_flip_x to cerebro_options if provided
+  spatial_images_flip_x_option <- ""
+  if (!is.null(spatial_images_flip_x)) {
+    is_list <- is.list(spatial_images_flip_x)
+    wrapper <- if (is_list) "list(" else "c("
+    # Calculate alignment indentation for: '  "spatial_images_flip_x" = '
+    # 2 spaces + 24 chars + 3 chars = 29 spaces
+    # Plus wrapper length
+    indent_len <- 29 + nchar(wrapper)
+    indent_spaces <- strrep(" ", indent_len)
+
+    items <- vapply(names(spatial_images_flip_x), function(n) {
+      val <- spatial_images_flip_x[[n]]
+      val_str <- formatRObject(val, indent = 0)
+      if (grepl("\n", val_str)) {
+        val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+      }
+      paste0('"', n, '" = ', val_str)
+    }, character(1))
+
+    spatial_images_flip_x_option <- paste0(',\n  "spatial_images_flip_x" = ', wrapper,
+                                           paste(items, collapse = paste0(",\n", indent_spaces)),
+                                           ")")
+  }
+
+  # Add spatial_images_flip_y to cerebro_options if provided
+  spatial_images_flip_y_option <- ""
+  if (!is.null(spatial_images_flip_y)) {
+    is_list <- is.list(spatial_images_flip_y)
+    wrapper <- if (is_list) "list(" else "c("
+    # Calculate alignment indentation for: '  "spatial_images_flip_y" = '
+    # 2 spaces + 24 chars + 3 chars = 29 spaces
+    # Plus wrapper length
+    indent_len <- 29 + nchar(wrapper)
+    indent_spaces <- strrep(" ", indent_len)
+
+    items <- vapply(names(spatial_images_flip_y), function(n) {
+      val <- spatial_images_flip_y[[n]]
+      val_str <- formatRObject(val, indent = 0)
+      if (grepl("\n", val_str)) {
+        val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+      }
+      paste0('"', n, '" = ', val_str)
+    }, character(1))
+
+    spatial_images_flip_y_option <- paste0(',\n  "spatial_images_flip_y" = ', wrapper,
+                                           paste(items, collapse = paste0(",\n", indent_spaces)),
+                                           ")")
+  }
+
+  # Add spatial_images_scale_x to cerebro_options if provided
+  spatial_images_scale_x_option <- ""
+  if (!is.null(spatial_images_scale_x)) {
+    is_list <- is.list(spatial_images_scale_x)
+    wrapper <- if (is_list) "list(" else "c("
+    # Calculate alignment indentation for: '  "spatial_images_scale_x" = '
+    # 2 spaces + 25 chars + 3 chars = 30 spaces
+    # Plus wrapper length
+    indent_len <- 30 + nchar(wrapper)
+    indent_spaces <- strrep(" ", indent_len)
+
+    items <- vapply(names(spatial_images_scale_x), function(n) {
+      val <- spatial_images_scale_x[[n]]
+      val_str <- formatRObject(val, indent = 0)
+      if (grepl("\n", val_str)) {
+        val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+      }
+      paste0('"', n, '" = ', val_str)
+    }, character(1))
+
+    spatial_images_scale_x_option <- paste0(',\n  "spatial_images_scale_x" = ', wrapper,
+                                            paste(items, collapse = paste0(",\n", indent_spaces)),
+                                            ")")
+  }
+
+  # Add spatial_images_scale_y to cerebro_options if provided
+  spatial_images_scale_y_option <- ""
+  if (!is.null(spatial_images_scale_y)) {
+    is_list <- is.list(spatial_images_scale_y)
+    wrapper <- if (is_list) "list(" else "c("
+    # Calculate alignment indentation for: '  "spatial_images_scale_y" = '
+    # 2 spaces + 25 chars + 3 chars = 30 spaces
+    # Plus wrapper length
+    indent_len <- 30 + nchar(wrapper)
+    indent_spaces <- strrep(" ", indent_len)
+
+    items <- vapply(names(spatial_images_scale_y), function(n) {
+      val <- spatial_images_scale_y[[n]]
+      val_str <- formatRObject(val, indent = 0)
+      if (grepl("\n", val_str)) {
+        val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+      }
+      paste0('"', n, '" = ', val_str)
+    }, character(1))
+
+    spatial_images_scale_y_option <- paste0(',\n  "spatial_images_scale_y" = ', wrapper,
+                                            paste(items, collapse = paste0(",\n", indent_spaces)),
+                                            ")")
   }
 
   # Generate authentication code if enabled
@@ -570,7 +718,7 @@ cerebro_root <- "."
 Cerebro.options <<- list(
   "mode" = "open",
   "crb_file_to_load" = {crb_load_code},
-  "cerebro_root" = cerebro_root{colors_option}{spatial_images_option}{spatial_rotation_option}{extra_options}
+  "cerebro_root" = cerebro_root{colors_option}{spatial_images_option}{spatial_plot_rotation_option}{spatial_images_flip_x_option}{spatial_images_flip_y_option}{spatial_images_scale_x_option}{spatial_images_scale_y_option}{extra_options}
 )
 
 shiny_options <- list(

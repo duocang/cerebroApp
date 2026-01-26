@@ -29,8 +29,56 @@ spatial_projection_parameters_plot_raw <- reactive({
   }
 
   background_opacity <- if (is.null(input[["spatial_projection_background_opacity"]])) 1 else input[["spatial_projection_background_opacity"]]
-  background_scale_x <- if (is.null(input[["spatial_projection_background_scale_x"]])) 1 else input[["spatial_projection_background_scale_x"]]
-  background_scale_y <- if (is.null(input[["spatial_projection_background_scale_y"]])) 1 else input[["spatial_projection_background_scale_y"]]
+
+  background_flip_x <- FALSE
+  background_flip_y <- FALSE
+  background_scale_x <- 1
+  background_scale_y <- 1
+
+  if (exists("Cerebro.options") && !is.null(Cerebro.options[["spatial_images_flip_x"]]) &&
+      exists("available_crb_files") && !is.null(available_crb_files$selected)) {
+    match_idx <- which(available_crb_files$files == available_crb_files$selected)
+    if (length(match_idx) > 0) {
+      current_name <- names(available_crb_files$files)[match_idx[1]]
+      if (!is.null(current_name) && current_name %in% names(Cerebro.options[["spatial_images_flip_x"]])) {
+        background_flip_x <- Cerebro.options[["spatial_images_flip_x"]][[current_name]]
+      }
+    }
+  }
+
+  if (exists("Cerebro.options") && !is.null(Cerebro.options[["spatial_images_flip_y"]]) &&
+      exists("available_crb_files") && !is.null(available_crb_files$selected)) {
+    match_idx <- which(available_crb_files$files == available_crb_files$selected)
+    if (length(match_idx) > 0) {
+      current_name <- names(available_crb_files$files)[match_idx[1]]
+      if (!is.null(current_name) && current_name %in% names(Cerebro.options[["spatial_images_flip_y"]])) {
+        background_flip_y <- Cerebro.options[["spatial_images_flip_y"]][[current_name]]
+      }
+    }
+  }
+
+  if (exists("Cerebro.options") && !is.null(Cerebro.options[["spatial_images_scale_x"]]) &&
+      exists("available_crb_files") && !is.null(available_crb_files$selected)) {
+    match_idx <- which(available_crb_files$files == available_crb_files$selected)
+    if (length(match_idx) > 0) {
+      current_name <- names(available_crb_files$files)[match_idx[1]]
+      if (!is.null(current_name) && current_name %in% names(Cerebro.options[["spatial_images_scale_x"]])) {
+        background_scale_x <- Cerebro.options[["spatial_images_scale_x"]][[current_name]]
+      }
+    }
+  }
+
+  if (exists("Cerebro.options") && !is.null(Cerebro.options[["spatial_images_scale_y"]]) &&
+      exists("available_crb_files") && !is.null(available_crb_files$selected)) {
+    match_idx <- which(available_crb_files$files == available_crb_files$selected)
+    if (length(match_idx) > 0) {
+      current_name <- names(available_crb_files$files)[match_idx[1]]
+      if (!is.null(current_name) && current_name %in% names(Cerebro.options[["spatial_images_scale_y"]])) {
+        background_scale_y <- Cerebro.options[["spatial_images_scale_y"]][[current_name]]
+      }
+    }
+  }
+
   parameters <- list(
     projection = input[["spatial_projection_to_display"]],
     n_dimensions = ncol(getProjection(input[["spatial_projection_to_display"]])),
@@ -44,8 +92,8 @@ spatial_projection_parameters_plot_raw <- reactive({
     x_range = input[["spatial_projection_scale_x_manual_range"]],
     y_range = input[["spatial_projection_scale_y_manual_range"]],
     background_image = input[["spatial_projection_background_image"]],
-    background_flip_x = spatial_projection_parameters_other[['background_flip_x']],
-    background_flip_y = spatial_projection_parameters_other[['background_flip_y']],
+    background_flip_x = background_flip_x,
+    background_flip_y = background_flip_y,
     background_scale_x = background_scale_x,
     background_scale_y = background_scale_y,
     background_opacity = background_opacity,
@@ -60,55 +108,11 @@ spatial_projection_parameters_plot <- debounce(spatial_projection_parameters_plo
 
 ##
 spatial_projection_parameters_other <- reactiveValues(
-  reset_axes = FALSE,
-  background_flip_x = FALSE,
-  background_flip_y = FALSE
+  reset_axes = FALSE
 )
 
 ##
 observeEvent(input[['spatial_projection_to_display']], {
   # message('--> set "spatial: reset_axes"')
   spatial_projection_parameters_other[['reset_axes']] <- TRUE
-})
-
-observeEvent(input[['spatial_projection_background_flip_x']], {
-  spatial_projection_parameters_other[['background_flip_x']] <- !spatial_projection_parameters_other[['background_flip_x']]
-  flipped <- spatial_projection_parameters_other[['background_flip_x']]
-  if (flipped) {
-    shinyjs::runjs("$('#spatial_projection_background_flip_x').text('Flipped L/R').addClass('flipped');")
-  } else {
-    shinyjs::runjs("$('#spatial_projection_background_flip_x').text('Flip Left/Right').removeClass('flipped');")
-  }
-})
-
-observeEvent(input[['spatial_projection_background_flip_y']], {
-  spatial_projection_parameters_other[['background_flip_y']] <- !spatial_projection_parameters_other[['background_flip_y']]
-  flipped <- spatial_projection_parameters_other[['background_flip_y']]
-  if (flipped) {
-    shinyjs::runjs("$('#spatial_projection_background_flip_y').text('Flipped U/D').addClass('flipped');")
-  } else {
-    shinyjs::runjs("$('#spatial_projection_background_flip_y').text('Flip Up/Down').removeClass('flipped');")
-  }
-})
-
-observeEvent(input[['spatial_projection_background_reset']], {
-  spatial_projection_parameters_other[['background_flip_x']] <- FALSE
-  spatial_projection_parameters_other[['background_flip_y']] <- FALSE
-  updateSliderInput(session, "spatial_projection_background_scale_x", value = 1)
-  updateSliderInput(session, "spatial_projection_background_scale_y", value = 1)
-  updateSliderInput(session, "spatial_projection_background_opacity", value = 1)
-  shinyjs::runjs("$('#spatial_projection_background_flip_x').text('Flip Left/Right').removeClass('flipped');")
-  shinyjs::runjs("$('#spatial_projection_background_flip_y').text('Flip Up/Down').removeClass('flipped');")
-})
-
-observeEvent(input[['spatial_projection_background_image']], {
-  if (is.null(input[["spatial_projection_background_image"]]) || input[["spatial_projection_background_image"]] == "No Background") {
-    spatial_projection_parameters_other[['background_flip_x']] <- FALSE
-    spatial_projection_parameters_other[['background_flip_y']] <- FALSE
-    updateSliderInput(session, "spatial_projection_background_scale_x", value = 1)
-    updateSliderInput(session, "spatial_projection_background_scale_y", value = 1)
-    updateSliderInput(session, "spatial_projection_background_opacity", value = 1)
-    shinyjs::runjs("$('#spatial_projection_background_flip_x').text('Flip Left/Right').removeClass('flipped');")
-    shinyjs::runjs("$('#spatial_projection_background_flip_y').text('Flip Up/Down').removeClass('flipped');")
-  }
 })

@@ -60,59 +60,10 @@ const spatial_projection_layout_2D = {
   paper_bgcolor: 'rgba(255, 255, 255, 0)',
 };
 
-// Inject CSS for counter-rotation of text elements
+// Inject CSS for spatial projection
 (function () {
   const style = document.createElement('style');
   style.innerHTML = `
-    #spatial_projection {
-      --spatial-rotation: 0deg;
-      transform-origin: center center;
-      z-index: 1;
-    }
-    #spatial_projection .textpoint text {
-      transform: rotate(var(--spatial-rotation));
-      transform-box: fill-box;
-      transform-origin: center center;
-    }
-    #spatial_projection .hoverlayer .hovertext {
-      transform: rotate(var(--spatial-rotation));
-      transform-box: fill-box;
-      transform-origin: center center;
-    }
-
-    /* Rotated State Styles */
-    #spatial_projection.is-rotated .main-svg {
-      background: rgba(0,0,0,0) !important;
-    }
-    #spatial_projection.is-rotated .bg {
-      fill-opacity: 0 !important;
-    }
-    #spatial_projection.is-rotated .cartesianlayer .xaxislayer-above,
-    #spatial_projection.is-rotated .cartesianlayer .yaxislayer-above,
-    #spatial_projection.is-rotated .cartesianlayer .gridlayer,
-    #spatial_projection.is-rotated .cartesianlayer .zerolinelayer,
-    #spatial_projection.is-rotated .infolayer .g-xtitle,
-    #spatial_projection.is-rotated .infolayer .g-ytitle {
-      display: none !important;
-    }
-    #spatial_projection.is-rotated .cartesianlayer .plot path,
-    #spatial_projection.is-rotated .cartesianlayer .plot rect {
-      stroke: none !important;
-      fill: none !important;
-    }
-    #spatial_projection.is-rotated .cartesianlayer .plot {
-      border: none !important;
-    }
-    #spatial_projection.is-rotated .cartesianlayer path,
-    #spatial_projection.is-rotated .cartesianlayer rect {
-      stroke: none !important;
-      fill: none !important;
-    }
-    #spatial_projection.is-rotated .cartesianlayer .xaxislayer-below path,
-    #spatial_projection.is-rotated .cartesianlayer .yaxislayer-below path {
-      stroke: none !important;
-    }
-
     /* Custom Legend Styles */
     #spatial_projection_legend {
       position: absolute;
@@ -777,28 +728,6 @@ shinyjs.updatePlot3DContinuousSpatial = function (params) {
     shinyjs.syncSpatialBackground(null, false, false, 1, 1, 1);
     shinyjs.detachModebar();
   });
-};
-
-shinyjs.rotateSpatialProjection = function (angle) {
-  const plotContainer = document.getElementById('spatial_projection');
-  if (plotContainer) {
-    const parentContainer = plotContainer.parentElement;
-    const isRotated = angle % 360 !== 0;
-
-    // Store angle for future updates
-    plotContainer.dataset.angle = angle;
-
-    if (isRotated) {
-      plotContainer.classList.add('is-rotated');
-      parentContainer.style.overflow = 'hidden';
-    } else {
-      plotContainer.classList.remove('is-rotated');
-      parentContainer.style.overflow = 'hidden';
-    }
-    plotContainer.style.transform = isRotated ? `rotate(${angle}deg)` : '';
-    plotContainer.style.setProperty('--spatial-rotation', `${-angle}deg`);
-  }
-  shinyjs.detachModebar();
 };
 
 shinyjs.getContainerDimensions = function () {

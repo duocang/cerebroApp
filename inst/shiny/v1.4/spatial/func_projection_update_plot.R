@@ -23,15 +23,15 @@ spatial_projection_update_plot <- function(input) {
   image_bounds <- list()
 
   if (!is.null(plot_parameters[['background_image']]) &&
-      plot_parameters[['background_image']] != "No Background") {
+    plot_parameters[['background_image']] != "No Background") {
 
     img_path <- plot_parameters[['background_image']]
 
-    if (file.exists(img_path)) {
-      # Calculate bounds from coordinates
-      x_rng <- range(coordinates[[1]], na.rm = TRUE)
-      y_rng <- range(coordinates[[2]], na.rm = TRUE)
+    # Calculate bounds from coordinates
+    x_rng <- range(coordinates[[1]], na.rm = TRUE)
+    y_rng <- range(coordinates[[2]], na.rm = TRUE)
 
+    if (file.exists(img_path)) {
       image_bounds <- list(
         xmin = x_rng[1],
         xmax = x_rng[2],
@@ -49,10 +49,10 @@ spatial_projection_update_plot <- function(input) {
       )
 
       try({
-         if (requireNamespace("base64enc", quietly = TRUE)) {
-           encoded <- base64enc::base64encode(img_path)
-           background_image_data <- paste0("data:", mime_type, ";base64,", encoded)
-         }
+        if (requireNamespace("base64enc", quietly = TRUE)) {
+          encoded <- base64enc::base64encode(img_path)
+          background_image_data <- paste0("data:", mime_type, ";base64,", encoded)
+        }
       })
     }
   }
@@ -124,11 +124,11 @@ spatial_projection_update_plot <- function(input) {
     output_meta <- list(
       color_type = 'categorical',
       traces = list(),
-      color_variable = plot_parameters[['color_variable']],
-      background_image = background_image_data,
-      image_bounds     = image_bounds,
-      background_flip_x = plot_parameters[['background_flip_x']],
-      background_flip_y = plot_parameters[['background_flip_y']],
+      color_variable     = plot_parameters[['color_variable']],
+      background_image   = background_image_data,
+      image_bounds       = image_bounds,
+      background_flip_x  = plot_parameters[['background_flip_x']],
+      background_flip_y  = plot_parameters[['background_flip_y']],
       background_scale_x = plot_parameters[['background_scale_x']],
       background_scale_y = plot_parameters[['background_scale_y']],
       background_opacity = plot_parameters[['background_opacity']]

@@ -76,67 +76,6 @@ output[["spatial_projection_main_parameters_UI"]] <- renderUI({
         conditionalPanel(
           condition = "input.spatial_projection_background_image && input.spatial_projection_background_image !== 'No Background'",
           tagList(
-            tags$style(HTML("
-              .flip-btn {
-                transition: all 0.4s ease;
-                min-width: 100px;
-                transform-style: preserve-3d;
-                perspective: 500px;
-              }
-              .flip-btn-x:hover {
-                transform: rotateY(180deg);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-              }
-              .flip-btn-y:hover {
-                transform: rotateX(180deg);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-              }
-              .flip-btn:active {
-                transform: scale(0.95);
-              }
-              .flip-btn.flipped {
-                background-color: #46637F !important;
-                border-color: #46637F !important;
-                color: white !important;
-              }
-            ")),
-            div(
-              style = "display: flex; justify-content: center; margin-top: 6px;",
-              actionButton(
-                inputId = "spatial_projection_background_reset",
-                label = "Reset",
-                class = "btn-xs"
-              )
-            ),
-            div(
-              style = "display: flex; justify-content: center; gap: 6px; margin-top: 6px; perspective: 500px;",
-              actionButton(
-                inputId = "spatial_projection_background_flip_x",
-                label = "Flip Left/Right",
-                class = "btn-xs flip-btn flip-btn-x"
-              ),
-              actionButton(
-                inputId = "spatial_projection_background_flip_y",
-                label = "Flip Up/Down",
-                class = "btn-xs flip-btn flip-btn-y"
-              )
-            ),
-            sliderInput(
-              inputId = "spatial_projection_background_scale_x",
-              label = "Stretch Left/Right",
-              min = 0.5,
-              max = 1.5,
-              value = 1,
-              step = 0.05
-            ),
-            sliderInput(
-              inputId = "spatial_projection_background_scale_y",
-              label = "Stretch Up/Down",
-              min = 0.5,
-              max = 1.5,
-              value = 1,
-              step = 0.05
-            ),
             sliderInput(
               inputId = "spatial_projection_background_opacity",
               label = "Image opacity",
