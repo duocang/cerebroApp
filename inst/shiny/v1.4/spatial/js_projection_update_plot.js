@@ -238,6 +238,49 @@ shinyjs.detachModebar = function () {
   }
 };
 
+shinyjs.applySpatialBackground = function () {
+  const plotContainer = document.getElementById('spatial_projection');
+  const bg = document.getElementById('spatial_projection_background');
+  if (!plotContainer || !bg) return;
+
+  const backgroundImage = bg.dataset.backgroundImage;
+
+  if (backgroundImage) {
+    bg.style.display = 'block';
+    bg.style.backgroundImage = `url("${backgroundImage}")`;
+
+    const flipX = bg.dataset.flipX === 'true';
+    const flipY = bg.dataset.flipY === 'true';
+    const scaleX = parseFloat(bg.dataset.scaleX) || 1;
+    const scaleY = parseFloat(bg.dataset.scaleY) || 1;
+    const opacity = parseFloat(bg.dataset.opacity);
+
+    const finalScaleX = (flipX ? -1 : 1) * scaleX;
+    const finalScaleY = (flipY ? -1 : 1) * scaleY;
+    bg.style.transform = `scale(${finalScaleX}, ${finalScaleY})`;
+    bg.style.opacity = isNaN(opacity) ? 1 : opacity;
+
+    const size = plotContainer._fullLayout && plotContainer._fullLayout._size ? plotContainer._fullLayout._size : null;
+    if (size) {
+      bg.style.left = size.l + 'px';
+      bg.style.top = size.t + 'px';
+      bg.style.width = size.w + 'px';
+      bg.style.height = size.h + 'px';
+    } else {
+      const parent = plotContainer.parentElement;
+      bg.style.left = '0px';
+      bg.style.top = '0px';
+      bg.style.width = parent.clientWidth + 'px';
+      bg.style.height = parent.clientHeight + 'px';
+    }
+  } else {
+    bg.style.display = 'none';
+    bg.style.backgroundImage = '';
+    bg.style.transform = '';
+    bg.style.opacity = '';
+  }
+};
+
 shinyjs.syncSpatialBackground = function (backgroundImage, flipX, flipY, scaleX, scaleY, opacity) {
   const plotContainer = document.getElementById('spatial_projection');
   if (!plotContainer) return;
@@ -261,35 +304,23 @@ shinyjs.syncSpatialBackground = function (backgroundImage, flipX, flipY, scaleX,
     bg.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
     parent.insertBefore(bg, plotContainer);
   }
-  if (backgroundImage) {
-    bg.style.display = 'block';
-    bg.style.backgroundImage = `url("${backgroundImage}")`;
-    const baseScaleX = scaleX || 1;
-    const baseScaleY = scaleY || 1;
-    const finalScaleX = (flipX ? -1 : 1) * baseScaleX;
-    const finalScaleY = (flipY ? -1 : 1) * baseScaleY;
-    bg.style.transform = `scale(${finalScaleX}, ${finalScaleY})`;
-    bg.style.opacity = opacity === undefined || opacity === null ? 1 : opacity;
-    const size = plotContainer._fullLayout && plotContainer._fullLayout._size ? plotContainer._fullLayout._size : null;
-    if (size) {
-      bg.style.left = size.l + 'px';
-      bg.style.top = size.t + 'px';
-      bg.style.width = size.w + 'px';
-      bg.style.height = size.h + 'px';
-    } else {
-      bg.style.left = '0px';
-      bg.style.top = '0px';
-      bg.style.width = parent.clientWidth + 'px';
-      bg.style.height = parent.clientHeight + 'px';
-    }
-  } else {
-    bg.style.display = 'none';
-    bg.style.backgroundImage = '';
-    bg.style.transform = '';
-    bg.style.opacity = '';
-  }
+
+  if (backgroundImage !== undefined) bg.dataset.backgroundImage = backgroundImage || '';
+  if (flipX !== undefined) bg.dataset.flipX = String(flipX);
+  if (flipY !== undefined) bg.dataset.flipY = String(flipY);
+  if (scaleX !== undefined) bg.dataset.scaleX = String(scaleX || 1);
+  if (scaleY !== undefined) bg.dataset.scaleY = String(scaleY || 1);
+  if (opacity !== undefined) bg.dataset.opacity = String(opacity === null ? 1 : opacity);
+
+  shinyjs.applySpatialBackground();
+
   plotContainer.style.position = 'relative';
   plotContainer.style.zIndex = '1';
+
+  if (!plotContainer.dataset.bgListenerAttached && typeof plotContainer.on === 'function') {
+    plotContainer.on('plotly_afterplot', shinyjs.applySpatialBackground);
+    plotContainer.dataset.bgListenerAttached = 'true';
+  }
 };
 
 // Custom Legend Helper Functions
