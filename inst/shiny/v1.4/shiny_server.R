@@ -103,16 +103,29 @@ server <- function(input, output, session) {
         if (!is.null(available_crb_files$selected)) {
           path_to_load <- available_crb_files$selected
         } else {
-          ## find the smallest file by file size
-          file_sizes <- sapply(file_to_load, function(f) {
-            if (file.exists(f)) {
-              file.size(f)
-            } else {
-              Inf  ## if it's a variable/object, assign infinite size so it won't be selected
-            }
-          })
-          smallest_idx <- which.min(file_sizes)
-          path_to_load <- file_to_load[smallest_idx]
+          ## determine which file to select by default
+          ## TRUE or NULL (default) -> select smallest file
+          ## FALSE -> select first file
+          pick_smallest <- TRUE
+          if ( !is.null(Cerebro.options[["crb_pick_smallest_file"]]) ) {
+            pick_smallest <- as.logical(Cerebro.options[["crb_pick_smallest_file"]])
+          }
+
+          if (isTRUE(pick_smallest)) {
+            ## find the smallest file by file size
+            file_sizes <- sapply(file_to_load, function(f) {
+              if (file.exists(f)) {
+                file.size(f)
+              } else {
+                Inf  ## if it's a variable/object, assign infinite size so it won't be selected
+              }
+            })
+            smallest_idx <- which.min(file_sizes)
+            path_to_load <- file_to_load[smallest_idx]
+          } else {
+            ## select the first file
+            path_to_load <- file_to_load[1]
+          }
         }
       } else {
         ## single file case

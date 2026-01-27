@@ -235,7 +235,8 @@ createTraditionalShinyApp <- function(cerebro_data,
                                       admin_pass = "admin#123",
                                       users = NULL,
                                       users_pass = NULL,
-                                      auth_passphrase = "123123") {
+                                      auth_passphrase = "123123",
+                                      crb_pick_smallest_file = TRUE) {
 
   # Validate input parameters ------------------------------------------------##
   if (!all(file.exists(cerebro_data))) {
@@ -508,6 +509,9 @@ createTraditionalShinyApp <- function(cerebro_data,
   crb_files_code <- ""
 
   # Generate additional Cerebro options
+  if (!is.null(crb_pick_smallest_file)) {
+    cerebro_options[["crb_pick_smallest_file"]] <- crb_pick_smallest_file
+  }
   extra_options <- ""
   if (length(cerebro_options) > 0) {
     for (opt_name in names(cerebro_options)) {
