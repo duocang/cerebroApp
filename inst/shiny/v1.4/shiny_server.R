@@ -141,13 +141,17 @@ server <- function(input, output, session) {
       path_to_load <- system.file("extdata/v1.4/example.crb", package = "cerebroApp")
     }
     ## set reactive value to selected file path
-    available_crb_files$selected <- path_to_load
+    if (is.null(available_crb_files$selected) || available_crb_files$selected != path_to_load) {
+      available_crb_files$selected <- path_to_load
+    }
   })
 
   ## listen to selected file from dropdown (when multiple files available)
   observeEvent(input[['crb_file_selector']], {
     if (!is.null(input[['crb_file_selector']]) && !is.null(available_crb_files$files)) {
-      available_crb_files$selected <- input[['crb_file_selector']]
+      if (is.null(available_crb_files$selected) || available_crb_files$selected != input[['crb_file_selector']]) {
+        available_crb_files$selected <- input[['crb_file_selector']]
+      }
     }
   })
 
