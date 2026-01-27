@@ -2,6 +2,26 @@
 ## UI elements to set additional parameters for the projection.
 ##----------------------------------------------------------------------------##
 output[["spatial_projection_additional_parameters_UI"]] <- renderUI({
+
+  default_point_size <- preferences[["scatter_plot_point_size"]][["default"]]
+
+  if (
+    exists("Cerebro.options") &&
+    !is.null(Cerebro.options[["spatial_plot_pointsize"]]) &&
+    is.list(Cerebro.options[["spatial_plot_pointsize"]]) &&
+    !is.null(available_crb_files$names) &&
+    !is.null(available_crb_files$files) &&
+    !is.null(available_crb_files$selected)
+  ) {
+    idx <- which(available_crb_files$files == available_crb_files$selected)
+    if (length(idx) > 0) {
+      current_name <- available_crb_files$names[idx[1]]
+      if (current_name %in% names(Cerebro.options[["spatial_plot_pointsize"]])) {
+        default_point_size <- Cerebro.options[["spatial_plot_pointsize"]][[current_name]]
+      }
+    }
+  }
+
   tagList(
     sliderInput(
       "spatial_projection_point_size",
@@ -9,7 +29,7 @@ output[["spatial_projection_additional_parameters_UI"]] <- renderUI({
       min = preferences[["scatter_plot_point_size"]][["min"]],
       max = preferences[["scatter_plot_point_size"]][["max"]],
       step = preferences[["scatter_plot_point_size"]][["step"]],
-      value = preferences[["scatter_plot_point_size"]][["default"]]
+      value = default_point_size
     ),
     sliderInput(
       "spatial_projection_point_opacity",

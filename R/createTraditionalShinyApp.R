@@ -214,6 +214,7 @@ createTraditionalShinyApp <- function(cerebro_data,
                                       result_dir = NULL,
                                       spatial_images = NULL,
                                       spatial_plot_rotation = NULL,
+                                      spatial_plot_pointsize = NULL,
                                       spatial_images_flip_x = NULL,
                                       spatial_images_flip_y = NULL,
                                       spatial_images_scale_x = NULL,
@@ -282,6 +283,17 @@ createTraditionalShinyApp <- function(cerebro_data,
     } else if (length(intersect(names(spatial_plot_rotation), names(cerebro_data))) == 0) {
       warning("No matching names found between spatial_plot_rotation and cerebro_data. Ignoring.", call. = FALSE)
       spatial_plot_rotation <- NULL
+    }
+  }
+
+  # Validate spatial_plot_pointsize if provided
+  if (!is.null(spatial_plot_pointsize)) {
+    if (is.null(names(spatial_plot_pointsize)) || any(names(spatial_plot_pointsize) == "")) {
+      warning("spatial_plot_pointsize must be a named list or vector. Ignoring.", call. = FALSE)
+      spatial_plot_pointsize <- NULL
+    } else if (length(intersect(names(spatial_plot_pointsize), names(cerebro_data))) == 0) {
+      warning("No matching names found between spatial_plot_pointsize and cerebro_data. Ignoring.", call. = FALSE)
+      spatial_plot_pointsize <- NULL
     }
   }
 
@@ -560,6 +572,31 @@ createTraditionalShinyApp <- function(cerebro_data,
                                       ")")
   }
 
+  # Add spatial_plot_pointsize to cerebro_options if provided
+  spatial_plot_pointsize_option <- ""
+  if (!is.null(spatial_plot_pointsize)) {
+    is_list <- is.list(spatial_plot_pointsize)
+    wrapper <- if (is_list) "list(" else "c("
+    # Calculate alignment indentation for: '  "spatial_plot_pointsize" = '
+    # 2 spaces + 27 chars + 3 chars = 32 spaces
+    # Plus wrapper length
+    indent_len <- 32 + nchar(wrapper)
+    indent_spaces <- strrep(" ", indent_len)
+
+    items <- vapply(names(spatial_plot_pointsize), function(n) {
+      val <- spatial_plot_pointsize[[n]]
+      val_str <- formatRObject(val, indent = 0)
+      if (grepl("\n", val_str)) {
+        val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+      }
+      paste0('"', n, '" = ', val_str)
+    }, character(1))
+
+    spatial_plot_pointsize_option <- paste0(',\n  "spatial_plot_pointsize" = ', wrapper,
+                                      paste(items, collapse = paste0(",\n", indent_spaces)),
+                                      ")")
+  }
+
   # Add spatial_images_flip_x to cerebro_options if provided
   spatial_images_flip_x_option <- ""
   if (!is.null(spatial_images_flip_x)) {
@@ -718,7 +755,7 @@ cerebro_root <- "."
 Cerebro.options <<- list(
   "mode" = "open",
   "crb_file_to_load" = {crb_load_code},
-  "cerebro_root" = cerebro_root{colors_option}{spatial_images_option}{spatial_plot_rotation_option}{spatial_images_flip_x_option}{spatial_images_flip_y_option}{spatial_images_scale_x_option}{spatial_images_scale_y_option}{extra_options}
+  "cerebro_root" = cerebro_root{colors_option}{spatial_images_option}{spatial_plot_rotation_option}{spatial_plot_pointsize_option}{spatial_images_flip_x_option}{spatial_images_flip_y_option}{spatial_images_scale_x_option}{spatial_images_scale_y_option}{extra_options}
 )
 
 shiny_options <- list(
