@@ -6,59 +6,62 @@
 ## UI element for output.
 ##----------------------------------------------------------------------------##
 output[["groups_tree_UI"]] <- renderUI({
-  fluidRow(
-    cerebroBox(
-      title = tagList(
-        boxTitle("Relationship tree"),
-        cerebroInfoButton(
-          "groups_tree_info",
-          style = "margin-right: 3px"
-        ),
-        shinyWidgets::dropdownButton(
-          tags$div(
-            style = "color: black !important;",
-            class = "pull-right",
-            tagList(
-              sliderInput(
-                "groups_tree_edge_width",
-                label = "Edge width:",
-                min = 1,
-                max = 5,
-                step = 1,
-                value = 2
-              ),
-              sliderInput(
-                "groups_tree_label_size",
-                label = "Label size:",
-                min = 1,
-                max = 5,
-                step = 1,
-                value = 2
-              ),
-              sliderInput(
-                "groups_tree_label_offset",
-                label = "Label offset:",
-                min = 0,
-                max = 5,
-                step = 0.5,
-                value = 0.5
-              ),
-              checkboxInput(
-                inputId = "groups_tree_margin",
-                label = "Extend margin",
-                value = TRUE
-              )
-            )
+  req(input[["groups_selected_group"]] %in% getGroups())
+  if (!is.null(getTree(input[["groups_selected_group"]]))) {
+    fluidRow(
+      cerebroBox(
+        title = tagList(
+          boxTitle("Relationship tree"),
+          cerebroInfoButton(
+            "groups_tree_info",
+            style = "margin-right: 3px"
           ),
-          circle = FALSE,
-          icon = icon("cog"),
-          inline = TRUE,
-          size = "xs"
-        )
-      ),
-      uiOutput("groups_tree_plot_or_message")
+          shinyWidgets::dropdownButton(
+            tags$div(
+              style = "color: black !important;",
+              class = "pull-right",
+              tagList(
+                sliderInput(
+                  "groups_tree_edge_width",
+                  label = "Edge width:",
+                  min = 1,
+                  max = 5,
+                  step = 1,
+                  value = 2
+                ),
+                sliderInput(
+                  "groups_tree_label_size",
+                  label = "Label size:",
+                  min = 1,
+                  max = 5,
+                  step = 1,
+                  value = 2
+                ),
+                sliderInput(
+                  "groups_tree_label_offset",
+                  label = "Label offset:",
+                  min = 0,
+                  max = 5,
+                  step = 0.5,
+                  value = 0.5
+                ),
+                checkboxInput(
+                  inputId = "groups_tree_margin",
+                  label = "Extend margin",
+                  value = TRUE
+                )
+              )
+            ),
+            circle = FALSE,
+            icon = icon("cog"),
+            inline = TRUE,
+            size = "xs"
+          )
+        ),
+        uiOutput("groups_tree_plot_or_message")
+      )
     )
-  )
+  }
 })
 
 ##----------------------------------------------------------------------------##
@@ -81,8 +84,6 @@ output[["groups_tree_plot_or_message"]] <- renderUI({
       ),
       plotOutput("groups_tree_plot")
     )
-  } else {
-    textOutput("groups_tree_text")
   }
 })
 

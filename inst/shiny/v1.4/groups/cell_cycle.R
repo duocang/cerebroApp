@@ -6,6 +6,7 @@
 ## UI element for output.
 ##----------------------------------------------------------------------------##
 output[["groups_cell_cycle_UI"]] <- renderUI({
+  req(length(getCellCycle()) > 0)
   fluidRow(
     cerebroBox(
       title = tagList(
@@ -25,47 +26,45 @@ output[["groups_cell_cycle_UI"]] <- renderUI({
 ## available.
 ##----------------------------------------------------------------------------##
 output[["groups_by_cell_cycle_UI_buttons"]] <- renderUI({
-  if ( length(getCellCycle()) > 0 ) {
-    tagList(
-      selectInput(
-        "groups_by_cell_cycle_column",
-        label = "Column to take data from:",
-        choices = getCellCycle()
+  req(length(getCellCycle()) > 0)
+
+  tagList(
+    selectInput(
+      "groups_by_cell_cycle_column",
+      label = "Column to take data from:",
+      choices = getCellCycle()
+    ),
+    fluidRow(
+      column(
+        width = 3,
+        shinyWidgets::radioGroupButtons(
+            inputId = "groups_by_cell_cycle_plot_type",
+            label = NULL,
+            choices = c("Bar chart", "Sankey plot"),
+            status = "primary",
+            justified = TRUE,
+            width = "100%",
+            size = "sm"
+        )
       ),
-      fluidRow(
-        column(
-          width = 3,
-          shinyWidgets::radioGroupButtons(
-             inputId = "groups_by_cell_cycle_plot_type",
-             label = NULL,
-             choices = c("Bar chart", "Sankey plot"),
-             status = "primary",
-             justified = TRUE,
-             width = "100%",
-             size = "sm"
-          )
+      column(
+        width = 9,
+        style = "padding: 5px;",
+        shinyWidgets::materialSwitch(
+          inputId = "groups_by_cell_cycle_show_as_percent",
+          label = "Show composition as percent [%]:",
+          status = "primary",
+          inline = TRUE
         ),
-        column(
-          width = 9,
-          style = "padding: 5px;",
-          shinyWidgets::materialSwitch(
-            inputId = "groups_by_cell_cycle_show_as_percent",
-            label = "Show composition as percent [%]:",
-            status = "primary",
-            inline = TRUE
-          ),
-          shinyWidgets::materialSwitch(
-            inputId = "groups_by_cell_cycle_show_table",
-            label = "Show table:",
-            status = "primary",
-            inline = TRUE
-          )
+        shinyWidgets::materialSwitch(
+          inputId = "groups_by_cell_cycle_show_table",
+          label = "Show table:",
+          status = "primary",
+          inline = TRUE
         )
       )
     )
-  } else {
-    textOutput("groups_by_cell_cycle_text")
-  }
+  )
 })
 
 ##----------------------------------------------------------------------------##
@@ -171,13 +170,6 @@ output[["groups_by_cell_cycle_table"]] <- DT::renderDataTable({
     hide_long_columns = TRUE,
     columns_percentage = columns_percentage
   )
-})
-
-##----------------------------------------------------------------------------##
-## Alternative text message if data is missing.
-##----------------------------------------------------------------------------##
-output[["groups_by_cell_cycle_text"]] <- renderText({
-  "No cell cycle assignments available."
 })
 
 ##----------------------------------------------------------------------------##
