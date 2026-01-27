@@ -7,18 +7,28 @@ output[["spatial_projection_additional_parameters_UI"]] <- renderUI({
 
   if (
     exists("Cerebro.options") &&
-    !is.null(Cerebro.options[["spatial_plot_pointsize"]]) &&
-    is.list(Cerebro.options[["spatial_plot_pointsize"]]) &&
-    !is.null(available_crb_files$names) &&
-    !is.null(available_crb_files$files) &&
-    !is.null(available_crb_files$selected)
+    !is.null(Cerebro.options[["point_size"]]) &&
+    is.list(Cerebro.options[["point_size"]]) &&
+    !is.null(Cerebro.options[["point_size"]][["spatial_projection_point_size"]])
   ) {
-    idx <- which(available_crb_files$files == available_crb_files$selected)
-    if (length(idx) > 0) {
-      current_name <- available_crb_files$names[idx[1]]
-      if (current_name %in% names(Cerebro.options[["spatial_plot_pointsize"]])) {
-        default_point_size <- Cerebro.options[["spatial_plot_pointsize"]][[current_name]]
+    config_val <- Cerebro.options[["point_size"]][["spatial_projection_point_size"]]
+
+    if (is.list(config_val)) {
+      if (
+          !is.null(available_crb_files$names) &&
+          !is.null(available_crb_files$files) &&
+          !is.null(available_crb_files$selected)
+      ) {
+          idx <- which(available_crb_files$files == available_crb_files$selected)
+          if (length(idx) > 0) {
+            current_name <- available_crb_files$names[idx[1]]
+            if (current_name %in% names(config_val)) {
+              default_point_size <- config_val[[current_name]]
+            }
+          }
       }
+    } else if (is.numeric(config_val)) {
+      default_point_size <- config_val
     }
   }
 

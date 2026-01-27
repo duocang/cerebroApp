@@ -178,6 +178,21 @@ formatRObject <- function(obj, indent = 0) {
 #' @param crb_pick_smallest_file Logical. If TRUE, the smallest file is selected by default.
 #'   Default is TRUE.
 #' @param show_upload_ui Logical. If TRUE, shows the file upload UI. Default is TRUE.
+#' @param point_size Named list. Default point sizes for various plots.
+#'   The list can contain the following keys, with either numeric values or NULL (to use defaults):
+#'   \itemize{
+#'     \item \code{"overview_projection_point_size"}: Point size for the overview projection.
+#'     \item \code{"trajectory_point_size"}: Point size for the trajectory projection.
+#'     \item \code{"expression_projection_point_size"}: Point size for the gene expression projection.
+#'     \item \code{"spatial_projection_point_size"}: Point size for the spatial projection. Can be a numeric value or a named list matching \code{cerebro_data} names for dataset-specific defaults.
+#'   }
+#'   Default is a list with all keys set to NULL.
+#' @param spatial_images Named list/vector. Paths to spatial images (e.g. tissue histology), names must match cerebro_data.
+#' @param spatial_plot_rotation Named list/vector. Initial rotation for spatial plots, names must match cerebro_data.
+#' @param spatial_images_flip_x Named list/vector. Whether to flip spatial images horizontally, names must match cerebro_data.
+#' @param spatial_images_flip_y Named list/vector. Whether to flip spatial images vertically, names must match cerebro_data.
+#' @param spatial_images_scale_x Named list/vector. Scaling factor for X axis of spatial images, names must match cerebro_data.
+#' @param spatial_images_scale_y Named list/vector. Scaling factor for Y axis of spatial images, names must match cerebro_data.
 #'
 #' @return Invisibly returns the path to the result directory.
 #'
@@ -217,7 +232,6 @@ createTraditionalShinyApp <- function(cerebro_data,
                                       result_dir = NULL,
                                       spatial_images = NULL,
                                       spatial_plot_rotation = NULL,
-                                      spatial_plot_pointsize = NULL,
                                       spatial_images_flip_x = NULL,
                                       spatial_images_flip_y = NULL,
                                       spatial_images_scale_x = NULL,
@@ -240,7 +254,13 @@ createTraditionalShinyApp <- function(cerebro_data,
                                       users_pass = NULL,
                                       auth_passphrase = "123123",
                                       crb_pick_smallest_file = TRUE,
-                                      show_upload_ui = TRUE) {
+                                      show_upload_ui = TRUE,
+                                      point_size = list(
+                                        overview_projection_point_size = NULL,
+                                        trajectory_point_size = NULL,
+                                        expression_projection_point_size = NULL,
+                                        spatial_projection_point_size = NULL
+                                      )) {
 
   # Validate input parameters ------------------------------------------------##
   if (!all(file.exists(cerebro_data))) {
@@ -288,17 +308,6 @@ createTraditionalShinyApp <- function(cerebro_data,
     } else if (length(intersect(names(spatial_plot_rotation), names(cerebro_data))) == 0) {
       warning("No matching names found between spatial_plot_rotation and cerebro_data. Ignoring.", call. = FALSE)
       spatial_plot_rotation <- NULL
-    }
-  }
-
-  # Validate spatial_plot_pointsize if provided
-  if (!is.null(spatial_plot_pointsize)) {
-    if (is.null(names(spatial_plot_pointsize)) || any(names(spatial_plot_pointsize) == "")) {
-      warning("spatial_plot_pointsize must be a named list or vector. Ignoring.", call. = FALSE)
-      spatial_plot_pointsize <- NULL
-    } else if (length(intersect(names(spatial_plot_pointsize), names(cerebro_data))) == 0) {
-      warning("No matching names found between spatial_plot_pointsize and cerebro_data. Ignoring.", call. = FALSE)
-      spatial_plot_pointsize <- NULL
     }
   }
 
@@ -519,16 +528,38 @@ createTraditionalShinyApp <- function(cerebro_data,
   if (!is.null(show_upload_ui)) {
     cerebro_options[["show_upload_ui"]] <- show_upload_ui
   }
+  if (!is.null(point_size) && length(point_size) > 0) {
+    cerebro_options[["point_size"]] <- point_size
+  }
   extra_options <- ""
   if (length(cerebro_options) > 0) {
     for (opt_name in names(cerebro_options)) {
       opt_value <- cerebro_options[[opt_name]]
-      if (is.logical(opt_value)) {
+      if (is.logical(opt_value) && length(opt_value) == 1) {
         extra_options <- paste0(extra_options, ',\n  ', opt_name, ' = ', toupper(as.character(opt_value)))
-      } else if (is.character(opt_value)) {
+      } else if (is.character(opt_value) && length(opt_value) == 1) {
         extra_options <- paste0(extra_options, ',\n  ', opt_name, ' = "', opt_value, '"')
+      } else if (is.list(opt_value)) {
+        # Calculate indentation: 2 spaces (for indentation) + name length + 3 chars (" = ")
+        indent_len <- 2 + nchar(opt_name) + 3
+        indent_spaces <- strrep(" ", indent_len)
+
+        val_str <- formatRObject(opt_value, indent = 0)
+        # Indent subsequent lines
+        if (grepl("\n", val_str)) {
+          val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+        }
+        extra_options <- paste0(extra_options, ',\n  ', opt_name, ' = ', val_str)
       } else {
-        extra_options <- paste0(extra_options, ',\n  ', opt_name, ' = ', deparse(opt_value))
+        # Handle other types (including vectors) safely
+        val_str <- paste(deparse(opt_value), collapse = "\n")
+        # Indent if multiline
+        if (grepl("\n", val_str)) {
+          indent_len <- 2 + nchar(opt_name) + 3
+          indent_spaces <- strrep(" ", indent_len)
+          val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
+        }
+        extra_options <- paste0(extra_options, ',\n  ', opt_name, ' = ', val_str)
       }
     }
   }
@@ -579,31 +610,6 @@ createTraditionalShinyApp <- function(cerebro_data,
     }, character(1))
 
     spatial_plot_rotation_option <- paste0(',\n  "spatial_plot_rotation" = ', wrapper,
-                                      paste(items, collapse = paste0(",\n", indent_spaces)),
-                                      ")")
-  }
-
-  # Add spatial_plot_pointsize to cerebro_options if provided
-  spatial_plot_pointsize_option <- ""
-  if (!is.null(spatial_plot_pointsize)) {
-    is_list <- is.list(spatial_plot_pointsize)
-    wrapper <- if (is_list) "list(" else "c("
-    # Calculate alignment indentation for: '  "spatial_plot_pointsize" = '
-    # 2 spaces + 27 chars + 3 chars = 32 spaces
-    # Plus wrapper length
-    indent_len <- 32 + nchar(wrapper)
-    indent_spaces <- strrep(" ", indent_len)
-
-    items <- vapply(names(spatial_plot_pointsize), function(n) {
-      val <- spatial_plot_pointsize[[n]]
-      val_str <- formatRObject(val, indent = 0)
-      if (grepl("\n", val_str)) {
-        val_str <- gsub("\n", paste0("\n", indent_spaces), val_str)
-      }
-      paste0('"', n, '" = ', val_str)
-    }, character(1))
-
-    spatial_plot_pointsize_option <- paste0(',\n  "spatial_plot_pointsize" = ', wrapper,
                                       paste(items, collapse = paste0(",\n", indent_spaces)),
                                       ")")
   }
@@ -766,7 +772,7 @@ cerebro_root <- "."
 Cerebro.options <<- list(
   "mode" = "open",
   "crb_file_to_load" = {crb_load_code},
-  "cerebro_root" = cerebro_root{colors_option}{spatial_images_option}{spatial_plot_rotation_option}{spatial_plot_pointsize_option}{spatial_images_flip_x_option}{spatial_images_flip_y_option}{spatial_images_scale_x_option}{spatial_images_scale_y_option}{extra_options}
+  "cerebro_root" = cerebro_root{colors_option}{spatial_images_option}{spatial_plot_rotation_option}{spatial_images_flip_x_option}{spatial_images_flip_y_option}{spatial_images_scale_x_option}{spatial_images_scale_y_option}{extra_options}
 )
 
 shiny_options <- list(

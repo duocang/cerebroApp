@@ -15,7 +15,16 @@ output[["expression_projection_additional_parameters_UI"]] <- renderUI({
       min = preferences[["scatter_plot_point_size"]][["min"]],
       max = preferences[["scatter_plot_point_size"]][["max"]],
       step = preferences[["scatter_plot_point_size"]][["step"]],
-      value = preferences[["scatter_plot_point_size"]][["default"]]
+      value = if (
+          exists("Cerebro.options") &&
+          !is.null(Cerebro.options[["point_size"]]) &&
+          is.list(Cerebro.options[["point_size"]]) &&
+          !is.null(Cerebro.options[["point_size"]][["expression_projection_point_size"]])
+        ) {
+          Cerebro.options[["point_size"]][["expression_projection_point_size"]]
+        } else {
+          preferences[["scatter_plot_point_size"]][["default"]]
+        }
     ),
     sliderInput(
       "expression_projection_point_opacity",

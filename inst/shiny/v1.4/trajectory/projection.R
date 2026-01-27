@@ -169,6 +169,17 @@ trajectory_projection_main_parameters_info <- list(
 ##----------------------------------------------------------------------------##
 
 output[["trajectory_projection_additional_parameters_UI"]] <- renderUI({
+  
+  default_point_size <- preferences[["scatter_plot_point_size"]][["default"]]
+  
+  if (
+    exists("Cerebro.options") &&
+    !is.null(Cerebro.options[["point_size"]]) &&
+    is.list(Cerebro.options[["point_size"]]) &&
+    !is.null(Cerebro.options[["point_size"]][["trajectory_point_size"]])
+  ) {
+    default_point_size <- Cerebro.options[["point_size"]][["trajectory_point_size"]]
+  }
 
   tagList(
     sliderInput(
@@ -177,7 +188,7 @@ output[["trajectory_projection_additional_parameters_UI"]] <- renderUI({
       min = preferences[["scatter_plot_point_size"]][["min"]],
       max = preferences[["scatter_plot_point_size"]][["max"]],
       step = preferences[["scatter_plot_point_size"]][["step"]],
-      value = preferences[["scatter_plot_point_size"]][["default"]]
+      value = default_point_size
     ),
     sliderInput(
       "trajectory_point_opacity",
