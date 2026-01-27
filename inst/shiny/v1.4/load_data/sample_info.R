@@ -6,18 +6,37 @@
 ## UI elements that show some basic information about the loaded data set.
 ##----------------------------------------------------------------------------##
 output[["load_data_sample_info_UI"]] <- renderUI({
-  tagList(
-    fluidRow(
-      valueBoxOutput("load_data_experiment_name"),
-      valueBoxOutput("load_data_number_of_cells"),
-      valueBoxOutput("load_data_number_of_grouping_variables")
-    ),
-    fluidRow(
-      valueBoxOutput("load_data_organism"),
-      valueBoxOutput("load_data_date_of_analysis"),
-      valueBoxOutput("load_data_date_of_export")
-    )
-  )
+  req(getExperiment())
+
+  # Row 1
+  row1 <- list()
+  if (!is.null(getExperiment()$experiment_name)) {
+    row1[[length(row1)+1]] <- valueBoxOutput("load_data_experiment_name")
+  }
+  if (!is.null(getCellNames()) && length(getCellNames()) > 0) {
+    row1[[length(row1)+1]] <- valueBoxOutput("load_data_number_of_cells")
+  }
+  if (!is.null(getGroups()) && length(getGroups()) > 0) {
+    row1[[length(row1)+1]] <- valueBoxOutput("load_data_number_of_grouping_variables")
+  }
+
+  # Row 2
+  row2 <- list()
+  if (!is.null(getExperiment()$organism)) {
+    row2[[length(row2)+1]] <- valueBoxOutput("load_data_organism")
+  }
+  if (!is.null(getExperiment()$date_of_analysis)) {
+    row2[[length(row2)+1]] <- valueBoxOutput("load_data_date_of_analysis")
+  }
+  if (!is.null(getExperiment()$date_of_export)) {
+    row2[[length(row2)+1]] <- valueBoxOutput("load_data_date_of_export")
+  }
+
+  ui_content <- list()
+  if (length(row1) > 0) ui_content[[length(ui_content)+1]] <- fluidRow(row1)
+  if (length(row2) > 0) ui_content[[length(ui_content)+1]] <- fluidRow(row2)
+
+  if (length(ui_content) > 0) tagList(ui_content) else NULL
 })
 
 ##----------------------------------------------------------------------------##
@@ -54,7 +73,7 @@ output[["load_data_number_of_cells"]] <- renderValueBox({
 ## number of grouping variables
 output[["load_data_number_of_grouping_variables"]] <- renderValueBox({
   valueBox(
-    value = length(getGroups()),
+    value = paste0( length(getGroups()), " groupings"),
     # subtitle = "Grouping variablesfasfaasfafdaf",
     subtitle = paste0(getGroups(), collapse = ", "),
     color = "light-blue"

@@ -14,22 +14,28 @@ output[["load_data_select_file_UI"]] <- renderUI({
     !is.null(Cerebro.options[['mode']]) &&
     Cerebro.options[["mode"]] != "closed"
   ) {
+    show_upload <- TRUE
+    if (!is.null(Cerebro.options[["show_upload_ui"]]) && Cerebro.options[["show_upload_ui"]] == FALSE) {
+      show_upload <- FALSE
+    }
     tagList(
       fluidRow(
         htmlOutput("load_data_mode_open")
       ),
       fluidRow(
         column(12,
-          titlePanel("Load data"),
-          fileInput(
-            inputId = "input_file",
-            label = "Select input data (.crb or .rds file)",
-            multiple = FALSE,
-            accept = c(".rds",".crb",".cerebro"),
-            width = '350px',
-            buttonLabel = "Browse...",
-            placeholder = "No file selected"
-          ),
+          if (show_upload) titlePanel("Load data"),
+          if (show_upload) {
+            fileInput(
+              inputId = "input_file",
+              label = "Select input data (.crb or .rds file)",
+              multiple = FALSE,
+              accept = c(".rds",".crb",".cerebro"),
+              width = '350px',
+              buttonLabel = "Browse...",
+              placeholder = "No file selected"
+            )
+          },
           ## Show file selector dropdown if multiple files are available
           uiOutput("crb_file_selector_UI")
         )

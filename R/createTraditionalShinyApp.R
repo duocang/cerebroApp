@@ -175,6 +175,9 @@ formatRObject <- function(obj, indent = 0) {
 #' @param users_pass Character vector. Passwords for additional users. Default is NULL.
 #' @param auth_passphrase Character. Passphrase for encrypting credentials database.
 #'   Default is "123123".
+#' @param crb_pick_smallest_file Logical. If TRUE, the smallest file is selected by default.
+#'   Default is TRUE.
+#' @param show_upload_ui Logical. If TRUE, shows the file upload UI. Default is TRUE.
 #'
 #' @return Invisibly returns the path to the result directory.
 #'
@@ -236,7 +239,8 @@ createTraditionalShinyApp <- function(cerebro_data,
                                       users = NULL,
                                       users_pass = NULL,
                                       auth_passphrase = "123123",
-                                      crb_pick_smallest_file = TRUE) {
+                                      crb_pick_smallest_file = TRUE,
+                                      show_upload_ui = TRUE) {
 
   # Validate input parameters ------------------------------------------------##
   if (!all(file.exists(cerebro_data))) {
@@ -511,6 +515,9 @@ createTraditionalShinyApp <- function(cerebro_data,
   # Generate additional Cerebro options
   if (!is.null(crb_pick_smallest_file)) {
     cerebro_options[["crb_pick_smallest_file"]] <- crb_pick_smallest_file
+  }
+  if (!is.null(show_upload_ui)) {
+    cerebro_options[["show_upload_ui"]] <- show_upload_ui
   }
   extra_options <- ""
   if (length(cerebro_options) > 0) {
