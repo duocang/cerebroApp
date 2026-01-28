@@ -2,6 +2,7 @@
 const spatial_projection_layout_2D = {
   uirevision: 'true',
   hovermode: 'closest',
+  dragmode: 'select', // DEBUG: Added dragmode for selection to work
   margin: {
     l: 50,
     r: 50,
@@ -641,7 +642,14 @@ const spatial_projection_default_params = {
 
 // update 2D projection with continuous coloring
 shinyjs.updatePlot2DContinuousSpatial = function (params) {
+  console.log('[DEBUG] updatePlot2DContinuousSpatial called');
   params = shinyjs.getParams(params, spatial_projection_default_params);
+  console.log('[DEBUG] Params received:', {
+    meta: params.meta,
+    dataPointsCount: params.data.x ? params.data.x.length : 0,
+    colorVariable: params.meta.color_variable,
+  });
+
   shinyjs.removeCustomLegend();
   shinyjs.removeContinuousLegend();
   const data = [];
@@ -694,7 +702,25 @@ shinyjs.updatePlot2DContinuousSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
+
+  console.log('[DEBUG] Layout dragmode:', layout_here.dragmode);
+  console.log('[DEBUG] Number of data points:', params.data.x ? params.data.x.length : 0);
+
   Plotly.react('spatial_projection', data, layout_here).then(() => {
+    console.log('[DEBUG] Plotly.react (continuous) completed successfully');
+
+    // DEBUG: Check if plotly selection events work
+    const plotContainer = document.getElementById('spatial_projection');
+    if (plotContainer) {
+      console.log('[DEBUG] Plot container found after react');
+      console.log('[DEBUG] Current dragmode in _fullLayout:', plotContainer._fullLayout ? plotContainer._fullLayout.dragmode : 'N/A');
+
+      // Re-attach selection debug listeners
+      if (typeof shinyjs.setupSelectionDebug === 'function') {
+        shinyjs.setupSelectionDebug();
+      }
+    }
+
     shinyjs.syncSpatialBackground(
       params.meta.background_image,
       params.meta.background_flip_x,
@@ -775,7 +801,14 @@ shinyjs.getContainerDimensions = function () {
 
 // update 2D projection with categorical coloring
 shinyjs.updatePlot2DCategoricalSpatial = function (params) {
+  console.log('[DEBUG] updatePlot2DCategoricalSpatial called');
   params = shinyjs.getParams(params, spatial_projection_default_params);
+  console.log('[DEBUG] Params received:', {
+    meta: params.meta,
+    dataPointsCount: params.data.x ? params.data.x.length : 0,
+    tracesCount: params.meta.traces ? params.meta.traces.length : 0,
+  });
+
   shinyjs.removeContinuousLegend();
   shinyjs.createCustomLegend(params.meta.traces, params.data.color);
   const data = [];
@@ -847,7 +880,25 @@ shinyjs.updatePlot2DCategoricalSpatial = function (params) {
       layout_here.height = plotContainer.parentElement.clientHeight;
     }
   }
+
+  console.log('[DEBUG] Layout dragmode:', layout_here.dragmode);
+  console.log('[DEBUG] Number of traces to render:', data.length);
+
   Plotly.react('spatial_projection', data, layout_here).then(() => {
+    console.log('[DEBUG] Plotly.react completed successfully');
+
+    // DEBUG: Check if plotly selection events work
+    const plotContainer = document.getElementById('spatial_projection');
+    if (plotContainer) {
+      console.log('[DEBUG] Plot container found after react');
+      console.log('[DEBUG] Current dragmode in _fullLayout:', plotContainer._fullLayout ? plotContainer._fullLayout.dragmode : 'N/A');
+
+      // Re-attach selection debug listeners
+      if (typeof shinyjs.setupSelectionDebug === 'function') {
+        shinyjs.setupSelectionDebug();
+      }
+    }
+
     shinyjs.syncSpatialBackground(
       params.meta.background_image,
       params.meta.background_flip_x,
@@ -929,3 +980,110 @@ shinyjs.updatePlot3DCategoricalSpatial = function (params) {
     shinyjs.detachModebar();
   });
 };
+
+// =============================================================================
+// DEBUG: Selection Event Monitoring
+// =============================================================================
+
+// Debug helper to monitor plotly selection events
+shinyjs.setupSelectionDebug = function () {
+  const plotContainer = document.getElementById('spatial_projection');
+  if (!plotContainer) {
+    console.warn('[DEBUG] spatial_projection element not found');
+    return;
+  }
+
+  console.log('[DEBUG] Setting up selection event listeners on spatial_projection');
+
+  // Monitor plotly_selected event
+  plotContainer.on('plotly_selected', function (eventData) {
+    console.log('=== [DEBUG] plotly_selected event fired ===');
+    console.log('  eventData:', eventData);
+    if (eventData) {
+      console.log('  eventData.points length:', eventData.points ? eventData.points.length : 'undefined');
+      if (eventData.points && eventData.points.length > 0) {
+        console.log('  First point:', eventData.points[0]);
+        console.log('  First 5 points x,y:', eventData.points.slice(0, 5).map((p) => `(${p.x}, ${p.y})`));
+      }
+    } else {
+      console.log('  eventData is null/undefined - selection cleared?');
+    }
+
+    // Check if Shiny is available
+    if (typeof Shiny !== 'undefined') {
+      console.log('  Shiny object available: true');
+      console.log('  Checking if event will be sent to Shiny...');
+    } else {
+      console.warn('  Shiny object NOT available!');
+    }
+  });
+
+  // Monitor plotly_selecting event (during selection)
+  plotContainer.on('plotly_selecting', function (eventData) {
+    // Only log occasionally to avoid spam
+    if (Math.random() < 0.1) {
+      console.log('[DEBUG] plotly_selecting - points being selected:', eventData ? (eventData.points ? eventData.points.length : 0) : 0);
+    }
+  });
+
+  // Monitor plotly_deselect event
+  plotContainer.on('plotly_deselect', function () {
+    console.log('[DEBUG] plotly_deselect event fired - selection cleared');
+  });
+
+  console.log('[DEBUG] Selection event listeners attached successfully');
+};
+
+// Debug function to check plot configuration
+shinyjs.debugPlotConfig = function () {
+  const plotContainer = document.getElementById('spatial_projection');
+  if (!plotContainer) {
+    console.warn('[DEBUG] spatial_projection element not found');
+    return;
+  }
+
+  console.log('=== [DEBUG] Plot Configuration ===');
+  console.log('  plotContainer.id:', plotContainer.id);
+  console.log('  plotContainer.data:', plotContainer.data);
+  console.log('  plotContainer._fullLayout:', plotContainer._fullLayout);
+
+  if (plotContainer.data && plotContainer.data.length > 0) {
+    console.log('  Number of traces:', plotContainer.data.length);
+    plotContainer.data.forEach((trace, i) => {
+      console.log(`  Trace ${i}:`, {
+        type: trace.type,
+        mode: trace.mode,
+        name: trace.name,
+        pointsCount: trace.x ? trace.x.length : 0,
+      });
+    });
+  }
+
+  // Check layout for dragmode
+  if (plotContainer._fullLayout) {
+    console.log('  dragmode:', plotContainer._fullLayout.dragmode);
+    console.log('  hovermode:', plotContainer._fullLayout.hovermode);
+  }
+};
+
+// Auto-setup debug when document is ready
+$(document).ready(function () {
+  console.log('[DEBUG] Document ready - will setup selection debug after short delay');
+
+  // Wait for plot to be initialized
+  setTimeout(function () {
+    shinyjs.setupSelectionDebug();
+  }, 2000);
+
+  // Also setup on any plot update
+  const observer = new MutationObserver(function (mutations) {
+    const plotContainer = document.getElementById('spatial_projection');
+    if (plotContainer && !plotContainer.dataset.debugListenerAttached) {
+      console.log('[DEBUG] Plot detected via MutationObserver, setting up debug listeners');
+      shinyjs.setupSelectionDebug();
+      plotContainer.dataset.debugListenerAttached = 'true';
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+});

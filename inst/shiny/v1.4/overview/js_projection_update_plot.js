@@ -2,6 +2,7 @@
 const overview_projection_layout_2D = {
   uirevision: 'true',
   hovermode: 'closest',
+  dragmode: 'select', // Enable selection mode for cell selection
   margin: {
     l: 50,
     r: 50,
@@ -110,7 +111,7 @@ const overview_projection_default_params = {
 }
 
 // update 2D projection with continuous coloring
-shinyjs.updatePlot2DContinuous = function(params) {
+shinyjs.updatePlot2DContinuous = function (params) {
   params = shinyjs.getParams(params, overview_projection_default_params);
   const data = [];
   data.push(
@@ -151,7 +152,7 @@ shinyjs.updatePlot2DContinuous = function(params) {
 }
 
 // update 3D projection with continuous coloring
-shinyjs.updatePlot3DContinuous = function(params) {
+shinyjs.updatePlot3DContinuous = function (params) {
   params = shinyjs.getParams(params, overview_projection_default_params);
   const data = [];
   data.push(
@@ -183,7 +184,7 @@ shinyjs.updatePlot3DContinuous = function(params) {
 }
 
 // update 2D projection with categorical coloring
-shinyjs.updatePlot2DCategorical = function(params) {
+shinyjs.updatePlot2DCategorical = function (params) {
   params = shinyjs.getParams(params, overview_projection_default_params);
   const data = [];
   for (let i = 0; i < params.data.x.length; i++) {
@@ -242,7 +243,7 @@ shinyjs.updatePlot2DCategorical = function(params) {
 }
 
 // update 3D projection with categorical coloring
-shinyjs.updatePlot3DCategorical = function(params) {
+shinyjs.updatePlot3DCategorical = function (params) {
   params = shinyjs.getParams(params, overview_projection_default_params);
   const data = [];
   for (let i = 0; i < params.data.x.length; i++) {

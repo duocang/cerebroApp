@@ -8,13 +8,20 @@ output[["spatial_details_selected_cells_plot"]] <- plotly::renderPlotly({
   req(
     input[["spatial_projection_to_display"]],
     input[["spatial_projection_to_display"]] %in% availableProjections(),
-    input[["spatial_selected_cells_plot_select_variable"]]
+    input[["spatial_selected_cells_plot_select_variable"]],
+    spatial_projection_data_to_plot()
   )
-  ## extract cells to plot
+  
+  ## Use the actual plotted coordinates from spatial_projection_data_to_plot()
+  ## instead of getProjection() to match the selection coordinates
+  plot_data <- spatial_projection_data_to_plot()
+  
+  ## extract cells to plot - use the coordinates that were actually plotted
   cells_df <- cbind(
-    getProjection(input[["spatial_projection_to_display"]]),
-    getMetaData()
+    plot_data$coordinates,
+    plot_data$cells_df
   )
+  
   ## check selection
   ## ... selection has not been made or there is no cell in it
   if ( is.null(spatial_projection_selected_cells()) ) {
@@ -31,6 +38,13 @@ output[["spatial_details_selected_cells_plot"]] <- plotly::renderPlotly({
         group = ifelse(identifier %in% spatial_projection_selected_cells()$identifier, 'selected', 'not selected'),
         group = factor(group, levels = c('selected', 'not selected'))
       )
+    
+    ## DEBUG: Check identifier matching
+    message("=== DEBUG: out_details_selected_cells_plot ===")
+    message("  cells_df identifiers (first 5): ", paste(head(cells_df$identifier, 5), collapse = ", "))
+    message("  selected cells identifiers (first 5): ", paste(head(spatial_projection_selected_cells()$identifier, 5), collapse = ", "))
+    message("  Number of matches: ", sum(cells_df$identifier %in% spatial_projection_selected_cells()$identifier))
+    message("  Total selected: ", nrow(spatial_projection_selected_cells()))
   }
   color_variable <- input[["spatial_selected_cells_plot_select_variable"]]
   ## if the selected coloring variable is categorical, represent the selected
